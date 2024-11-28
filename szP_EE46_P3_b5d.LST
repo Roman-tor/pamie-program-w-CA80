@@ -1,0 +1,1818 @@
+00000h                                                           ;CPU     "Z80.TBL"
+00000h                                                           ;HOF     "INT8" ; jesli "BIN8" wowczas musimy zmienic plik wynikowy na BIN
+00000h            TI:                   EQU       7              ; TI - pobranie znaku z echem
+00000h            EXPR:                 EQU       0213H          ; EXPR - pobranie ciagu liczb szesnastkowych /HEX/ na stos
+00000h            EXPRW:                EQU       19B4H          ; j.w. ale tylko cyfry 0-9
+00000h            PARAM:                EQU       01F4H          ; pobiera 4. znaki do HL + PWyœw
+00000h            COM:                  EQU       01ABH          ; COM - pokazuje znak 7-seg z rejestru C
+00000h            CLR:                  EQU       10H            ; CLR - kasowanie wyswietlacza
+00000h            CLR1:                 EQU       11H            ; CLR1 - kasowanie wyswietlacza bez zmiany PWYS
+00000h            PRINT:                EQU       01D4H          ; PRINT - drukuje komunikat z (HL)
+00000h            PRINT1:               EQU       01D5H          ; PRINT1 - drukuje komunikat z (HL) bez zmiany PWYS
+00000h            CO:                   EQU       01E0H          ; CO - wyswietlenie cyfry hex
+00000h            CO1:                  EQU       01E1H          ; CO1 - wyswietlenie cyfry hex bez zmiany PWYS
+00000h            LBYTE:                EQU       18H            ; LBYTE - wyswietlenie Aku w HEX
+00000h            LBYTE1:               EQU       1BH            ; LBYTE1 - wyswietlenie Aku w HEX bez zmiany PWYS
+00000h            LADR:                 EQU       20H            ; LADR - wyswietlenie HL w HEX
+00000h            LADR1:                EQU       21H            ; LADR1 - wyswietlenie HL w HEX bez zmiany PWYS
+00000h            CSTS:                 EQU       0FFC3H         ; pobiera znak z klawiatury /flaga C/
+00000h            CI:                   EQU       0FFC6H         ; czekanie na puszczenie klawisza a potem na wcisniecie
+00000h            CIM:                  EQU       184H           ; jak CSTS
+00000h            NMIU:                 EQU       0FFCCH         ; obsluga przerwania niemaskowalnego u¿ytkownika
+00000h            ERR:                  EQU       0A23H          ; tekst "Err" ca80
+00000h            HILO:                 EQU       023BH          ; HL=HL+1, DE-HL
+00000h            TOS:                  EQU       0FF8DH         ; stos systemowy
+00000h            TOS1:                 EQU       0FF66H         ; stos uzytkownika
+00000h            ME1:                  EQU       039FH          ; czesc zlec. wpisanie stalej do CA -: C-stala, HL, od DE do
+00000h            L1:                   EQU       80H            ; pocz. 1. linii LCD
+00000h            L2:                   EQU       0C0H           ; pocz. 2. linii
+00000h            L3:                   EQU       94H            ; pocz. 3. linii
+00000h            L4:                   EQU       0D4H           ; pocz. 4. linii
+00000h            CYF0:                 EQU       0FFF7H         ;wysw. cyfry na pozycji 0 wyswietlacza CA80
+00000h            CYF1:                 EQU       0FFF8H         ;wysw. cyfry na pozycji 1
+00000h            CYF2:                 EQU       0FFF9H
+00000h            CYF3:                 EQU       0FFFAH
+00000h            CYF4:                 EQU       0FFFBH
+00000h            CYF5:                 EQU       0FFFCH
+00000h            CYF6:                 EQU       0FFFDH
+00000h            CYF7:                 EQU       0FFFEH
+00000h                                                           ; do obslugi LCD
+00000h            INSTR:                EQU       0E8H           ; INSTRUKCJA
+00000h            DANA:                 EQU       0E9H           ; DANA
+00000h            LCD_BUSY:             EQU       0EAH
+00000h            LCD_RDR:              EQU       0EBH
+00000h                                            
+00000h            NUM_PR_EE:            EQU       1000H          ; tu zapis pocz. programow w EEPROM - np. adr 1000-1001-pr.nr 0, 1002-1003-pr. nr 1 itd 
+00000h            PR_EE:                EQU       1100H          ; tu pocz. programow w EEprom AT24C512 /64kbajtow
+00000h            NR_L:                 EQU       0FE00H         ; tu aktualnie wyswiet. nr linii
+00000h            PR_ILE:               EQU       0FE01H         ; ilosc znalezionych programow
+00000h                                                           ;wyb_port:  EQU 0FE03h   ; przechowalnia wybranego portu /E3 lub inny np. E7+
+00000h            POCZ_PR_T:            EQU       PR_ILE+1       ; miejsce w TABL_PR_CA w CA, do obliczen
+00000h            PR_CA:                EQU       0FE04H         ; numery programow /*4/ lub nr, nazwa, pocz. w EEPR /*6/, FC00-0F wykorz. przy przesuw. tekstu <WYSW_TEKST_CA80>
+00000h            POCZ_WEE:             EQU       PR_CA+1        ; pocz. adres wpisu nowego programu /przy zapisie/ lub pocz. szuk programu przy odczycie
+00000h            PR_OD:                EQU       POCZ_WEE+2     ; zapisz program z RAM CA "od"
+00000h            PR_DO:                EQU       PR_OD+2        ; zapisz program z RAM CA "do"
+00000h            PR_DLUG:              EQU       PR_DO+2        ; ilosc bajtow, dlugosc programu
+00000h            NR_PR:                EQU       PR_DO+4        ; nr programu /FE0D
+00000h            POCZ_W_CA:            EQU       PR_DO+5        ; pocz. uruchamianego pr. w CA
+00000h            TABL_PR_CA:           EQU       PR_DO+7        ; tu zapisuj odczytane numery programow /FE10-FEFF 
+00000h            ADR_Z_64:             EQU       0A0H           ; "adres" EEPROM 64kB /nr 7/- ustaw na ZAPIS , bit 0->0
+00000h            ADR_O_64:             EQU       ADR_Z_64+1     ; "adres" EEPROM - ustaw na ODCZYT , bit 0-> 1
+00000h            CTRL:                 EQU       0E3H           ; slowo kontrolne portu 8255 /lub inne np. E7
+00000h                                                           ; SDA - PA.0    SCL - PC.4
+00000h                                                           ;WE_WE:     EQU 99h ; SDA WEJ/H, SCL-WEJ/H
+00000h                                                           ;WY_WE:     EQU 89h ; SDA WYJ/L  SCL-WEJ/H -podczas <spr_ACK>
+00000h                                                           ;WE_WY:     EQU 90h ; SDA WEJ/J  SCL-WYJ L
+00000h                                                           ;WY_WY:     EQU 80h ; SDA i SCL na L
+00000h                                                           ;P_SDA:     EQU CTRL-3 ; 0E0h ; port danych - tu PA.0 
+00000h                                                           ; SDA - PB.0    SCL - PC.4
+00000h            WE_WE:                EQU       8BH            ; SDA WEJ/H, SCL-WEJ/H
+00000h            WY_WE:                EQU       89H            ; SDA WYJ/L  SCL-WEJ/H -podczas <spr_ACK>
+00000h            WE_WY:                EQU       82H            ; SDA WEJ/J  SCL-WYJ L
+00000h            WY_WY:                EQU       80H            ; SDA i SCL na L
+00000h            P_SDA:                EQU       CTRL-2         ;  0E1h ; port danych - tu PB.0 - 0E1h
+00000h            P_CLK:                EQU       CTRL-1         ; 0E2h - port CLK - taktowanie zegara PC.4
+00000h                                                           ; SDA - PC.0,   SCL - PC.4 - u mnie jako P3
+00000h                                                           ;WE_WE:     EQU 89h ; SDA WEJ/H, SCL-WEJ/H                    89 lub 8Bh
+00000h                                                           ;WY_WE:     EQU 88h ; SDA WYJ/L  SCL-WEJ/H -podczas <spr_ACK> 88 lub 8Ah 
+00000h                                                           ;WE_WY:     EQU 81h ; SDA WEJ/J  SCL-WYJ L                    81 lub 83H
+00000h                                                           ;WY_WY:     EQU 80h ; SDA i SCL na L                            80h       
+00000h                                                           ;P_SDA:      EQU CTRL -1 ; 0E2h ; port danych - tu  PC.0 0E2h
+00000h                                            
+00000h                                                           ; okreslenie markerów
+00000h            M_KPR:                EQU       0FEH           ; M_KPR - marker konca programow: FD E4 , potem FE FE FF FF...
+00000h            M_PR:                 EQU       0FDE4H         ; FD E4 - marker pocz/konca programu 
+00000h            M_NAZ:                EQU       0DDE2H         ; marker nazwy - DD E2
+00000h                                                           ;==============
+00000h                                                           ; format pliku z nr i nazwami w EEprom /przyklad/:
+00000h                                                           ; od 1000h format jak nizej:
+00000h                                                           ; 01 03 11 - 01 nr porgramu, 1103 pocz. tego prgramu w EEPROM I2c
+00000h                                                           ; 02 C3 19 - 02 nr porgramu  19C3 pocz.tego prgramu w EEPROM I2C
+00000h                                                           ; ... FE FE FE FE - az do 10FF
+00000h                                                           ; od 1100h taki format jak nizej:
+00000h                                                           ; FD E4 pocz. programu/ow, taki sam jak w FLASH 2 i EEPROm SST29xxx
+00000h                                                           ; 01 - nr programu
+00000h                                                           ; 00 C0 ; dwa bajty - pocz. programu w RAM CA80 - C000h
+00000h                                                           ; 31 66 FF.. .. ..  - nasz program
+00000h                                                           ; FD E4 marker konca i pocz. nastepnego prog.
+00000h                                                           ; 02 .....program nr 2
+00000h                                                           ; 00 D0  ; pocz. programu w CA80 - D000h
+00000h                                                           ; 21 11 22 .. .. ..  program
+00000h                                                           ; FD E4 nastepny prog.
+00000h                                                           ; 03 ..... itd
+00000h                                                           ; w programie umieszczamy nazwe, poprzedzajac ja DD E2 !!!
+00000h                                                           ; FD E4 FE FE FF FF.. - koniec obszaru z numerami /FD E$ FE FE/, nazwami programow
+00000h                                                           ;====
+00000h                                                           ; ver. ..b5a - podczas szuk. dl. programu, wysw. nazwe w L1, zapis programow <wpis_pr> w RAM CA
+00000h                                                           ; ver. ..b5b - zapis w EEPROM pocz. programow, od adr 1000-10FF, programy od 1100
+00000h                                                           ;            ; od 1000h - np. 01 05 11 ... 23 00 C0 FE FE FE FE ...
+00000h                                                           ;            01 program nr 1, od 1105h FE FE.. koniec programow            
+00000h                                                           ; ver. ..b5d - pobieranie numeru progr. - tylko cyfry CD 0B419h EXPRW 
+00000h                                  ORG       08000H         ; EEPROM pod P2 -> PB.0 ; SDA - PB.0    SCL - PC.4
+08000h            PR_START:                       
+08000h                                                           ; ld a, CTRL ; gdzie podlaczona pamiec EEPROM
+08000h                                                           ; ld (wyb_port), a
+08000h            PROGR_E:                        
+08000h 3166FF                           LD        SP,0FF66H      ;
+08003h 215480                           LD        HL,CIEE        ;Wlaczenie obslugi "G" w NMI
+08006h 22C7FF                           LD        (CI+1),HL
+08009h                                                           ;======
+08009h                                                           ;  ld HL, obs_przer1
+08009h                                                           ;  ld (CSTS+1), HL
+08009h                                                           ;  ld a, 0C3h
+08009h                                                           ;  ld (NMIU), A
+08009h                                                           ;==========
+08009h            CAEE:                           
+08009h 3166FF                           LD        SP,0FF66H
+0800Ch CD2185                           CALL      INI_WYSW       ;inicjacja LCD, wpis stalych /FD-od FC99/ do CA
+0800Fh D7                               RST       CLR
+08010h 80                               DEFB      80H
+08011h                                            
+08011h            CAEEP:                          
+08011h 21DF87                           LD        HL,CA_EE       ; na CA "EEPr_i2c"
+08014h CDD401                           CALL      PRINT
+08017h 80                               DEFB      80H
+08018h                                                           ; na LCD
+08018h CDE084                           CALL      WYSW_KOM_1
+0801Bh CD0700                           CALL      TI             ; pobierz nr zlec.
+0801Eh 17                               DEFB      17H
+0801Fh 5F                               LD        E,A            ; nr zlecenia
+08020h FE08                             CP        LCTX           ; czy "legalne"
+08022h D23980                           JP        NC,EREE        ; nielegalne
+08025h D7                               RST       CLR
+08026h 70                               DEFB      70H
+08027h 210980                           LD        HL,CAEE
+0802Ah E5                               PUSH      HL
+0802Bh 0E02                             LD        C,2            ;dla EXPR
+0802Dh 214480                           LD        HL,CTBLX       ;tablica rozejsc
+08030h 1600                             LD        D,0            ;w E numer zlecenia
+08032h 19                               ADD       HL,DE
+08033h 19                               ADD       HL,DE
+08034h 5E                               LD        E,(HL)
+08035h 23                               INC       HL
+08036h 56                               LD        D,(HL)
+08037h EB                               EX        DE,HL
+08038h E9                               JP        (HL)           ;Pseudo CALL
+08039h                                            
+08039h            EREE:                           
+08039h D7                               RST       CLR
+0803Ah 80                               DEFB      80H
+0803Bh 21230A                           LD        HL,ERR         ; "ERR" na CA
+0803Eh CDD401                           CALL      PRINT
+08041h 35                               DEFB      35H
+08042h 18C5                             JR        CAEE
+08044h                                            
+08044h            CTBLX:                          
+08044h 5F80                             DEFW      Z0             ; kasowanie pamieci EEPROM - przygotowanie do zapisu programow
+08046h 2F81                             DEFW      Z1             ; szukaj pierwszy wolny nr programu
+08048h BC8A                             DEFW      AKTUAL         ; aktualizacja wpisanych programow - wpis do CA i przepisanie do NUM_PR w EEPROM - od 1000
+0804Ah EC85                             DEFW      SPEC           ; C9 - powrot - rezerwa
+0804Ch 8681                             DEFW      Z4             ; Zapisz RAM [od][.][do][.][NR] do EEPROM
+0804Eh ED85                             DEFW      Z5             ; szukanie dlugosci programu 
+08050h B783                             DEFW      Z6             ; szukanie nazw programow i przepisanie programu do RAM - podaj nr programu 0-FF
+08052h EC85                             DEFW      SPEC           ; C9 - powrot - rezerwa  Z7      ; przeglad EEPROM
+08054h            LCTX:                 EQU       ($-CTBLX)/2    ; ilosc programow/zleceñ
+08054h                                            
+08054h            CIEE:                                          ; obsluga, gdy wcisniemy klawisz G - powrot na pocz. programu
+08054h CD8401                           CALL      CIM            ;jak CD F3 FF
+08057h F5                               PUSH      AF
+08058h FE10                             CP        10H            ;Kod klaw. "G"
+0805Ah CA0980                           JP        Z,CAEE
+0805Dh F1                               POP       AF
+0805Eh C9                               RET       
+0805Fh                                                           ;====
+0805Fh                                                           ;OBS_PRZER1: ; bezwarunkowe przjeœcie, w NMIU FFCC
+0805Fh                                                           ; call CSTS  ; CD CC FF
+0805Fh                                                           ;  push AF
+0805Fh                                                           ;  cp 17h
+0805Fh                                                           ;  jp z, CAEE
+0805Fh                                                           ;  pop AF
+0805Fh                                                           ;  ret
+0805Fh                                                           ;====
+0805Fh            Z0:                                            ; kasowanie /wpis FD E4 FE FE/ na pocz. pamieci EEPROM AT24C256/512
+0805Fh CDAC86                           CALL      CZYSC_LCD
+08062h 21E887                           LD        HL,KAS_EE      ; "Erase?"  na CA
+08065h CDD401                           CALL      PRINT
+08068h 80                               DEFB      80H
+08069h 214289                           LD        HL,KAS_EE2     ; "KASOWAC EEPROM?C-OK" na LCD
+0806Ch CDB986                           CALL      WYS_TEKST      ;"KASUJ PROGRAM A ="
+0806Fh            Z0A:                            
+0806Fh CF                               RST       8              ; CF czekaj na wcisniecie klawisza 
+08070h FE0C                             CP        0CH            ; jesli C, to kasuj caly EEPROM I2C
+08072h CA0F81                           JP        Z,Z01
+08075h FE0A                             CP        0AH            ; kasuj program
+08077h 20F6                             JR        NZ,Z0A
+08079h                                                           ; jr CAEE       ; mozna zmodyfikowac i wpisac FF do calej pamieci
+08079h                                            
+08079h            KAS_PROG:                                      ; wcisnieto klaw. A - pobierz nr programu i skasuj
+08079h 21F187                           LD        HL,KAS_PR1     ; "Eras.Pr."
+0807Ch CDD401                           CALL      PRINT
+0807Fh 62                               DEFB      62H
+08080h D7                               RST       10H            ; D7
+08081h 20                               DEFB      20H
+08082h CD028A                           CALL      FIND_PROG_SZUK
+08085h                                                           ; znaleziono program
+08085h 2B                               DEC       HL
+08086h 2B                               DEC       HL
+08087h 2B                               DEC       HL
+08088h E5                               PUSH      HL
+08089h FDE1                             POP       IY             ; na potrzeby sprawdzenia konca strony
+0808Bh C5                               PUSH      BC
+0808Ch CD7D82                           CALL      RESET
+0808Fh CD1887                           CALL      WPISZ_ADR      ; wpisz adres pocz. zapisu do EEPROM
+08092h 1EFF                             LD        E,0FFH         ;  marker FF po FD E4 oznacza "pusty obszar" - FF
+08094h CDB083                           CALL      ZAP_B_KS
+08097h C1                               POP       BC             ; dlugosc zapisu bajtow FF
+08098h 58                               LD        E,B            ;  BC - ilosc wolnych bajtów, wpis: najpierw starsze bajty, potem mlodsze
+08099h CDB083                           CALL      ZAP_B_KS
+0809Ch 59                               LD        E,C            ; prostsze do wyswietlenia na LCD
+0809Dh CDB083                           CALL      ZAP_B_KS
+080A0h            KAS2:                           
+080A0h 1EFF                             LD        E,0FFH         ; ta stala bedzie wpisana jako "pusty obszar"
+080A2h CD6D87                           CALL      ZAP_BAJT
+080A5h CD9C87                           CALL      SPRAWDZ        ;BC = BC-1, czy BC = 0
+080A8h 280F                             JR        Z,KAS_Z64
+080AAh FD23                             INC       IY
+080ACh                                                           ; sprawdzenie czy koniec strony zapisu w EEPROM
+080ACh FD7D                             LD        A,IYL          ;dfb 0fdh, 7dh ;   ld ml. bity IY do A
+080AEh E63F                             AND       3FH            ; sprawdz mlodsze bity i 4. bit /koniec str. 1F /24C64/
+080B0h                                                           ; 3Fh - co 64/40h bajtow /24C256/, 7Fh /dla 24C512/, FF - dla 24C16
+080B0h FE00                             CP        0H
+080B2h 20EC                             JR        NZ,KAS2
+080B4h                                                           ; koniec strony: 0,20/4kB/, 40/8kB-DS3231/, itd, przystosowane do EEPROM DS3231 8- kB, 32 kB, 64kB
+080B4h CD9E82                           CALL      KON_STR1
+080B7h 18E7                             JR        KAS2
+080B9h                                            
+080B9h            KAS_Z64:                        
+080B9h                                                           ; dopisac wpis do RAM CA80, tam gdzie byl nr programu FF FF FF
+080B9h 3A0DFE                           LD        A,(NR_PR)
+080BCh 210DFE                           LD        HL,TABL_PR_CA-3; bo programy od 1 a nie od 0 !
+080BFh CD9F8A                           CALL      OBL_ADR
+080C2h E5                               PUSH      HL
+080C3h FDE1                             POP       IY
+080C5h D9                               EXX                      ; sprawdzimy, czy kasowany program jest ostatni, jesli tak
+080C6h FDE5                             PUSH      IY             ; zamiast FF FF  FF wpiszemy FE FE FE
+080C8h E1                               POP       HL
+080C9h 23                               INC       HL
+080CAh 23                               INC       HL
+080CBh 23                               INC       HL
+080CCh 7E                               LD        A,(HL)
+080CDh FEFE                             CP        M_KPR          ; czy FE  **
+080CFh 2008                             JR        NZ,ABC
+080D1h 3EFE                             LD        A,M_KPR
+080D3h FDE5                             PUSH      IY
+080D5h E1                               POP       HL
+080D6h D9                               EXX       
+080D7h 1803                             JR        KAS1A
+080D9h            ABC:                            
+080D9h D9                               EXX       
+080DAh            ABC1:                           
+080DAh                                                           ; w HL adres /w CA/ kasow. programu
+080DAh 3EFF                             LD        A,0FFH
+080DCh            KAS1A:                          
+080DCh 0603                             LD        B,3
+080DEh            KAS1:                           
+080DEh 77                               LD        (HL),A
+080DFh 23                               INC       HL
+080E0h 10FC                             DJNZ      KAS1
+080E2h                                                           ; teraz wpisz FF FF FF do EEPROM w miejsce skasowanego programu *w num_pr_EE /od 1000
+080E2h CD0387                           CALL      STOP           ; lub RESET
+080E5h 2A02FE                           LD        HL,(POCZ_PR_T) ; adres w CA , od FE10, tablica nr prog
+080E8h 7D                               LD        A,L
+080E9h DE11                             SBC       A,11H          ; w CA od FE 10, a w EEPROM od 10 00
+080EBh 6F                               LD        L,A
+080ECh 2610                             LD        H,10H
+080EEh E5                               PUSH      HL
+080EFh FDE1                             POP       IY             ; do kontroli konca strony
+080F1h CD1887                           CALL      WPISZ_ADR      ; do EEPROM
+080F4h 01FF03                           LD        BC,03FFH       ; trzy bajty, wartosc 0FF
+080F7h            KAS3:                           
+080F7h 59                               LD        E,C
+080F8h CDB083                           CALL      ZAP_B_KS       ; zapisz bajt i sprawdz czy koniec strony
+080FBh 00                               NOP       
+080FCh 10F9                             DJNZ      KAS3
+080FEh CD0387                           CALL      STOP           ; teraz nastepuje zapis do EEPROM - uaktualnienie RAM w CA
+08101h CD8B8A                           CALL      CZYT_NR        ; przepisanie z EEPROM do CA numerow programow i ich adr. w EEPROM
+08104h 210288                           LD        HL,KON         ; "END" na CA
+08107h CDD401                           CALL      PRINT
+0810Ah 30                               DEFB      30H
+0810Bh D7                               RST       10H            ; D7 czysc wysw. CA
+0810Ch 53                               DEFB      53H
+0810Dh CF                               RST       8              ; CF czekaj na klawisz    
+0810Eh C9                               RET                      ; jp CAEE
+0810Fh                                            
+0810Fh            Z01:                            
+0810Fh 0EFE                             LD        C,M_KPR        ; 0FEh ; stala do zapisu
+08111h 2110FE                           LD        HL,TABL_PR_CA
+08114h 11FFFE                           LD        DE,TABL_PR_CA+0EFH
+08117h CD9F03                           CALL      ME1            ; wpisanie stalej do CA80
+0811Ah 210010                           LD        HL,NUM_PR_EE   ; w EEPROM, 1000h - dokad
+0811Dh CD1887                           CALL      WPISZ_ADR      ; START I2C i zapis bajtu/ow
+08120h 2110FE                           LD        HL,TABL_PR_CA  ; w CA80, FE10 ; skad
+08123h 01EF00                           LD        BC,0EFH        ; dlugosc, ile bajtow zapisac
+08126h CD5F83                           CALL      ZAP_Z64
+08129h                                                           ; teraz "inicjacja" pamieci FD E4 FE FE
+08129h 210011                           LD        HL,PR_EE
+0812Ch C39183                           JP        END_WP4        ; zapis tylko FD E4 FE FE na pocz. programow w pamieci EEPROM
+0812Fh                                            
+0812Fh            Z1:                                            ; sprawdz, ktory numer programu jest wolny call nr_free ; ktory numer jest wolny, wyswietl go na LCD i CA, ile programow na LCD
+0812Fh CDAC86                           CALL      CZYSC_LCD
+08132h CD8385                           CALL      NR_FREE1
+08135h 21CE87                           LD        HL,NR_FR+2     ; pocz. tekstu
+08138h CDD401                           CALL      PRINT
+0813Bh 44                               DEFB      44H
+0813Ch 7B                               LD        A,E
+0813Dh DF                               RST       18H            ; D7 wysw. A
+0813Eh 22                               DEFB      22H
+0813Fh CF                               RST       8              ; czekaj na wcisniecie klawisza
+08140h C9                               RET                      ; jp CAEE
+08141h                                            
+08141h            END_PR:                                        ; szukaj "najstarszego adresu" w EEPROM w <TABL_PR_CA>
+08141h 010300                           LD        BC,3           ; tablica  trzybajtowa, moze sie zdarzyc, ze np. wpiszemy program
+08144h 2A11FE                           LD        HL,(TABL_PR_CA+1); "recznie" w miejsce skasowanego, gdzies w srodku
+08147h DD2114FE                         LD        IX,TABL_PR_CA+4;       pamieci EEPROM
+0814Bh            SZ2:                            
+0814Bh DD5E00                           LD        E,(IX+0)
+0814Eh DD5601                           LD        D,(IX+1)
+08151h                                                           ; sprawdz, czy "pusty" obszar /FF FF/ czy koniec <TABL_PT_CA>
+08151h 3EFF                             LD        A,0FFH         ; pusty obszar
+08153h BB                               CP        E
+08154h 2003                             JR        NZ,SZ21
+08156h BA                               CP        D
+08157h 280E                             JR        Z,SZ3
+08159h            SZ21:                           
+08159h 3EFE                             LD        A,0FEH         ; koniec <TABL_PR_CA>
+0815Bh BB                               CP        E
+0815Ch 2002                             JR        NZ,SZ2A
+0815Eh BA                               CP        D
+0815Fh C8                               RET       Z              ; znaleziono "najwiekszy" adres /HL/
+08160h            SZ2A:                           
+08160h E5                               PUSH      HL
+08161h FDE1                             POP       IY
+08163h ED52                             SBC       HL,DE
+08165h 3807                             JR        C,AA           ; DE > HL
+08167h            SZ3:                            
+08167h DD09                             ADD       IX,BC
+08169h FDE5                             PUSH      IY
+0816Bh E1                               POP       HL
+0816Ch 18DD                             JR        SZ2
+0816Eh            AA:                                            ; wpisz wiekszy adres do HL i IY
+0816Eh D5                               PUSH      DE
+0816Fh E1                               POP       HL
+08170h E5                               PUSH      HL
+08171h FDE1                             POP       IY
+08173h DD09                             ADD       IX,BC
+08175h 18D4                             JR        SZ2
+08177h                                            
+08177h                                                           ;end_pr1: ; szukamy ostatniego programu w EEPROM
+08177h                                                           ;  ld hl, TABL_PR_CA ; tablica programow w CA /po trzy bajty- nr prog. i dwa baty -adres w EEPROM
+08177h                                                           ;  ld C, M_KPR ; 2x FE  koniec tablicy programow
+08177h                                                           ;  ld B, 0FFh ; skasowany program
+08177h                                                           ;  a1:
+08177h                                                           ;  ld A, (HL)
+08177h                                                           ;  inc HL
+08177h                                                           ;  cp C  
+08177h                                                           ;  jr nz, a1
+08177h                                                           ;  inc HL
+08177h                                                           ;  cp C
+08177h                                                           ;  jr nz, a1
+08177h                                                           ;  ret ; w HL adres pocz. ostatniego programu w EEPROM
+08177h                                            
+08177h            SZUK_MFD:                                      ; szukaj  FD E4 - pocz/koniec programu w EEprom, nastepny bajt to nr programu
+08177h DD210EFE                         LD        IX,POCZ_W_CA   ; tu beda zapisywane odczytane numery programow / 1,2 ...itd/
+0817Bh            SZUK_MFD1:                      
+0817Bh CDEB84                           CALL      MARKER_PR
+0817Eh                                                           ; znaleziono FD E4, po nim nr programu, musimy go zapisac w RAM
+0817Eh CD3387                           CALL      CZYT_BAJT      ; odczytuje nr programu i zapisuje w RAM
+08181h FEFE                             CP        M_KPR          ;  0FE   FE po FD E4 oznacza koniec programow,
+08183h C8                               RET       Z              ;  koniec programow
+08184h 18F5                             JR        SZUK_MFD1      ;
+08186h                                            
+08186h                                                           ;[4][ADR1[.][ADR2][.][NR][=] NR = nr programu 1- 99 , tylko cyfry 0-9
+08186h            Z4:                                            ; zapis programu [od] [.]  [do] [.]  [nr_programu] [=]/ nr 1-99
+08186h 210688                           LD        HL,PR_OB       ; "PR/ogram/ kl. A , oB/szar/ kl. E"  na CA
+08189h CDD401                           CALL      PRINT
+0818Ch 80                               DEFB      80H
+0818Dh CDAC86                           CALL      CZYSC_LCD
+08190h 218988                           LD        HL,ZAP_PR_OB   ;"ZAPISZ PROGR klaw. A ZAPIS OBSZARU kl. E"
+08193h CDB986                           CALL      WYS_TEKST      ; wyœwietla w 1. i 3. linii
+08196h            Z41A:                           
+08196h CDC3FF                           CALL      CSTS           ; CD C3 FF
+08199h 30FB                             JR        NC,Z41A        ; nie wcisnieto klawisza
+0819Bh FE0A                             CP        0AH            ; czy A ? -> zapisz program
+0819Dh 281B                             JR        Z,Z4_PR
+0819Fh FE0E                             CP        0EH            ; przepisz obszar z CA do EEPORM [od CA] [.] [do_CA] [.] od_EEP] [=]
+081A1h 20F3                             JR        NZ,Z41A        ; ustaw rejestry do zapisu do EEPROM - HL adr. CA, IY - adr. EEPROM, BC - dlugoœæ
+081A3h            Z4_OB:                          
+081A3h CDB685                           CALL      SET_OBSZ       ; pobierz adresy
+081A6h CD5F83                           CALL      ZAP_Z64        ; zapis obszaru do EEPROM
+081A9h                                                           ; koniec zapisu
+081A9h 210288                           LD        HL,KON         ; "END" na CA80
+081ACh CDD401                           CALL      PRINT
+081AFh 35                               DEFB      35H
+081B0h FD7D                             LD        A,IYL
+081B2h DF                               RST       LBYTE
+081B3h 20                               DEFB      20H
+081B4h FD7C                             LD        A,IYH
+081B6h DF                               RST       LBYTE
+081B7h 22                               DEFB      22H
+081B8h CF                               RST       8              ; CF
+081B9h C9                               RET                      ; jp CAEE ; pocz. programu
+081BAh                                            
+081BAh            Z4_PR:                                         ; zapis programu
+081BAh D7                               RST       CLR
+081BBh 30                               DEFB      30H
+081BCh CD7584                           CALL      SZUKAM         ;wyswietl na LCD "szukam konca " itd  a na CA "FIND" i mruga kwadr.
+081BFh 210011                           LD        HL,PR_EE
+081C2h CD5F87                           CALL      SET_ADR_ODCZ   ;
+081C5h            Z41:                            
+081C5h CD3387                           CALL      CZYT_BAJT      ; IY++
+081C8h FEFF                             CP        0FFH           ; jesli pierwszy bajt = FF - brak wpisanych programow, pamiec czysta ma FF FF FF ?
+081CAh CCAC82                           CALL      Z,WPIS_MARK    ; wpisz na pocz. EEPROM AT24C512 bajty: FD E4 FE FE
+081CDh CD4181                           CALL      END_PR         ; szukaj poczatek ostatniego programu w <TABL_PR_CA> w CA -> EEPROM
+081D0h                                                           ;dec hl      ; za ostatnim programem mozna wpisac nowy /w EEPROM/
+081D0h                                                           ;dec hl
+081D0h                                                           ;dec hl
+081D0h                                                           ;ld D, (HL)
+081D0h                                                           ;dec HL
+081D0h                                                           ;ld E, (HL)
+081D0h                                                           ;ex DE, HL
+081D0h                                                           ;push HL ; adres w EEPRON do 
+081D0h                                                           ;pop IY 
+081D0h CD5F87                           CALL      SET_ADR_ODCZ   ; bo wyzej byl odczyt teraz wracamy do pocz. /PR_EE/
+081D3h CD7781                           CALL      SZUK_MFD       ; szukamy adr. konca programow w EEPROM (IY) i zapis nr programu do RAM [pocz_w_CA]
+081D6h                                            
+081D6h            Z42:                                           ;pobierz adresy i nr programu - przepisz RAM do EEPROM
+081D6h D7                               RST       CLR            ; CA80
+081D7h 53                               DEFB      53H
+081D8h CDAC86                           CALL      CZYSC_LCD
+081DBh 21B288                           LD        HL,ZAP_DO_EE   ; "podaj od . do . nr ="
+081DEh CDCA86                           CALL      WYS_TEKST1     ; na LCD
+081E1h 210F88                           LD        HL,CA_OD
+081E4h CDE485                           CALL      POB_ADR
+081E7h 2207FE                           LD        (PR_OD),HL     ; zapamietanie
+081EAh 211488                           LD        HL,CA_DO
+081EDh CDE485                           CALL      POB_ADR
+081F0h 2209FE                           LD        (PR_DO),HL     ; zapamietanie
+081F3h 21DA87                           LD        HL,NR
+081F6h CDD401                           CALL      PRINT
+081F9h 44                               DEFB      44H
+081FAh CD8385                           CALL      NR_FREE1
+081FDh 7B                               LD        A,E            ; pierwszy wolny
+081FEh DF                               RST       18H            ; wysw. nr programu na CA
+081FFh 22                               DEFB      22H
+08200h 0E01                             LD        C,1            ; numer programu
+08202h CDB419                           CALL      EXPRW          ; tylko 0 - 9 ; zmienia HL!
+08205h 20                               DEFB      20H
+08206h C1                               POP       BC             ;C - nazwa = nr programu 1 do 99, dwucyfrowy
+08207h                                                           ; zapamietanie
+08207h ED5B07FE                         LD        DE,(PR_OD)     ; ADR1 - od
+0820Bh 2A09FE                           LD        HL,(PR_DO)     ; ADR2 - do
+0820Eh ED52                             SBC       HL,DE
+08210h 23                               INC       HL
+08211h 23                               INC       HL
+08212h 220BFE                           LD        (PR_DLUG),HL
+08215h FD2B                             DEC       IY
+08217h FD2B                             DEC       IY             ; pocz. /w EEPROM/  wpisu nastepnego programu
+08219h FD2205FE                         LD        (POCZ_WEE),IY  ; przechowanie
+0821Dh 79                               LD        A,C            ; nr programu
+0821Eh CDB782                           CALL      SPR_NR         ; jesli wolny, wpisz go do EEPROM /od 0 - FD/
+08221h                                                           ; jesli zajety, znajdz pierwszy wolny nr /FF oznacza wolny obszar/
+08221h F5                               PUSH      AF             ; dla LCD
+08222h F5                               PUSH      AF             ; dla CA80
+08223h CD6F86                           CALL      INI_LCD
+08226h F1                               POP       AF
+08227h DF                               RST       LBYTE          ; DF wysw. rej. A
+08228h 20                               DEFB      20H            ; PWYSW
+08229h 21D387                           LD        HL,NR_NF       ; "noFree" - nr zajety
+0822Ch CDD401                           CALL      PRINT          ;na CA
+0822Fh 62                               DEFB      62H
+08230h 3E80                             LD        A,L1           ; 1. linia
+08232h D3E8                             OUT       (INSTR),A
+08234h F1                               POP       AF             ; numer juz uzywany
+08235h CDD686                           CALL      WYSW_A
+08238h 215A88                           LD        HL,NR_NF1      ; "numer zajety" na LCD
+0823Bh CDB986                           CALL      WYS_TEKST
+0823Eh CDA887                           CALL      OP_100MS
+08241h 14                               DEFB      20             ; op. ok. 2 sek
+08242h            Z42A:                           
+08242h CDCD82                           CALL      NR_FREE
+08245h 3E94                             LD        A,L3
+08247h D3E8                             OUT       (INSTR),A
+08249h 217B88                           LD        HL,PR_END+7    ; "podaj numer progr" na LCD
+0824Ch CDB986                           CALL      WYS_TEKST
+0824Fh CDA887                           CALL      OP_100MS       ; opoznienie
+08252h 0A                               DEFB      10
+08253h            Z43:                            
+08253h D7                               RST       CLR            ; czysc na CA CYF0 i CYF1
+08254h 20                               DEFB      20H
+08255h 21C087                           LD        HL,NR_PROG
+08258h CDD401                           CALL      PRINT
+0825Bh 62                               DEFB      62H
+0825Ch                                                           ; znaleziono pierwszy wolny numer, mozna go wpisac albo inny nr
+0825Ch 0E01                             LD        C,1            ; 1 parametr
+0825Eh CD1302                           CALL      EXPR
+08261h 20                               DEFB      20H
+08262h C1                               POP       BC             ;C - nowy nr programu
+08263h 79                               LD        A,C
+08264h CDB782                           CALL      SPR_NR         ; jesli numer "wolny", to przepisanie  programu do EEPROM
+08267h                                                           ;  wpisany nr zajety
+08267h CDCD82                           CALL      NR_FREE
+0826Ah CDA887                           CALL      OP_100MS
+0826Dh 0F                               DEFB      15
+0826Eh 18E3                             JR        Z43
+08270h                                            
+08270h            CZYT_BAJTY_PR:                  
+08270h CD3387                           CALL      CZYT_BAJT      ; odczytuje bajt i zapisuje wg (IX)
+08273h DD7700                           LD        (IX),A
+08276h DD23                             INC       IX
+08278h CD9C87                           CALL      SPRAWDZ        ; czy BC = 0, koniec odczytu
+0827Bh 20F3                             JR        NZ,CZYT_BAJTY_PR
+0827Dh                                                           ; koniec odczytu
+0827Dh                                                           ;RES2:
+0827Dh                                                           ; call RESET ; pam. EEprom
+0827Dh                                                           ; ret
+0827Dh                                            
+0827Dh            RESET:                                         ; reset pamieci 24C16/512
+0827Dh                                                           ; ld c, CTRL
+0827Dh CDF186                           CALL      START_I2C
+08280h 3E82                             LD        A,WE_WY
+08282h D3E3                             OUT       (CTRL),A
+08284h                                                           ;out (CTRL), A
+08284h 0609                             LD        B,9H           ; 9. cykli zegara
+08286h            RES21:                          
+08286h CD2B87                           CALL      CLK
+08289h 05                               DEC       B
+0828Ah 20FA                             JR        NZ,RES21
+0828Ch CDF186                           CALL      START_I2C
+0828Fh 00                               NOP       
+08290h 00                               NOP       
+08291h CD0387                           CALL      STOP
+08294h C9                               RET       
+08295h                                            
+08295h            KON_STR:                                       ; koniec strony podczas zapisu EEPROM
+08295h FD23                             INC       IY             ;
+08297h FD7D                             LD        A,IYL
+08299h E63F                             AND       3FH
+0829Bh FE00                             CP        0
+0829Dh C0                               RET       NZ
+0829Eh            KON_STR1:                       
+0829Eh C5                               PUSH      BC
+0829Fh E5                               PUSH      HL
+082A0h CD0387                           CALL      STOP           ; teraz nastepuje zapis  do EEPROM-koniec strony
+082A3h FDE5                             PUSH      IY             ; aktualny adres zapisu w EEPROM
+082A5h E1                               POP       HL
+082A6h                                                           ; LD E, adr_z_64 ; "adres" pamieci EEPROM do zapisu
+082A6h CD1887                           CALL      WPISZ_ADR
+082A9h E1                               POP       HL
+082AAh C1                               POP       BC
+082ABh C9                               RET       
+082ACh                                            
+082ACh            WPIS_MARK:                                     ; jesli pierwszy program /pamiec byla "pusta" FF, to  musimy wpisac marker
+082ACh 210011                           LD        HL,PR_EE
+082AFh FD210011                         LD        IY,PR_EE
+082B3h CD9083                           CALL      END_WP3
+082B6h C9                               RET       
+082B7h                                            
+082B7h            SPR_NR:                                        ;rej. A i  C - nr programu - czy podany numer programu juz wykorzystany
+082B7h FEFE                             CP        M_KPR          ; 0FEh  ; nr zabroniony, po FD E4 FE oznacza koniec programów w EEPROM
+082B9h C8                               RET       Z
+082BAh FEFF                             CP        0FFH           ; nr zabroniony , po Fd E4 FF oznacza "pusty obszar" - wypelniony FF
+082BCh C8                               RET       Z
+082BDh 0650                             LD        B,80           ; max il. programów 
+082BFh 2110FE                           LD        HL,TABL_PR_CA  ; pocz. obszaru szukania numer programu w RAM
+082C2h            SPR1:                                          ; szukaj, czy nr /rej.A/ wolny, jesli tak to przepisz program do EEPROM
+082C2h BE                               CP        (HL)
+082C3h C8                               RET       Z              ; numer wykorzystany, podaj inny
+082C4h 23                               INC       HL
+082C5h 23                               INC       HL
+082C6h 23                               INC       HL
+082C7h 05                               DEC       B
+082C8h 10F8                             DJNZ      SPR1
+082CAh C31283                           JP        PRZEP_PROG
+082CDh                                            
+082CDh            NR_FREE:                                       ; ktory numer programu jest wolny oraz ile programow znaleziono
+082CDh CDF982                           CALL      NF             ; numer wolny
+082D0h            NR2:                                           ; znaleziono nr nieuzywany - pierwszy wolny
+082D0h 7B                               LD        A,E
+082D1h F5                               PUSH      AF             ; dla CA
+082D2h F5                               PUSH      AF             ; dla LCD
+082D3h 3EC0                             LD        A,L2
+082D5h D3E8                             OUT       (INSTR),A
+082D7h 214788                           LD        HL,NR_1WOL     ; tekst na LCD "pierwszy wolny nr " <rej.A>
+082DAh CDCA86                           CALL      WYS_TEKST1     ; bez INC (IX) = przeskok na nastepna linie
+082DDh F1                               POP       AF
+082DEh CDD686                           CALL      WYSW_A         ; na LCD
+082E1h F1                               POP       AF
+082E2h DF                               RST       LBYTE          ; wysw. rej. A PWYS 20  wolny numer
+082E3h 20                               DEFB      20H
+082E4h 21CC87                           LD        HL,NR_FR       ; nrFree
+082E7h CDD401                           CALL      PRINT
+082EAh 62                               DEFB      62H
+082EBh 3E94                             LD        A,L3
+082EDh D3E8                             OUT       (INSTR),A
+082EFh 216888                           LD        HL,ILE_PRO     ; "ZNALEZIONO "
+082F2h CDCA86                           CALL      WYS_TEKST1     ; bez INC (IX) = przeskok na nastepna linie
+082F5h CD0C85                           CALL      SZUK_END_PR    ; ile znaleziono programow /rej. E/
+082F8h C9                               RET                      ; rej. D ile "wolnych obszarów" z FF FF ...
+082F9h                                            
+082F9h            NF:                                            ; ktory numer programu wolny
+082F9h 1E01                             LD        E,1            ; od 1, moze byc od 0
+082FBh            N1:                             
+082FBh 2110FE                           LD        HL,TABL_PR_CA  ; max 222 bajty
+082FEh 0650                             LD        B,80           ; bo mamy 3x inc hl, wiec B < 222/3
+08300h            N2:                             
+08300h 7B                               LD        A,E
+08301h            N21:                            
+08301h BE                               CP        (HL)
+08302h 2807                             JR        Z,N3
+08304h            N22:                            
+08304h                                                           ; pop AF
+08304h                                                           ;n22a:
+08304h 23                               INC       HL
+08305h 23                               INC       HL
+08306h 23                               INC       HL
+08307h 10F8                             DJNZ      N21
+08309h 7B                               LD        A,E
+0830Ah C9                               RET                      ; 1. wolny nr progr. znaleziony
+0830Bh                                            
+0830Bh            N3:                             
+0830Bh B7                               OR        A
+0830Ch 7B                               LD        A,E
+0830Dh 3C                               INC       A
+0830Eh 27                               DAA       
+0830Fh 5F                               LD        E,A
+08310h 18E9                             JR        N1
+08312h                                            
+08312h            PRZEP_PROG:                                    ;  zapisz program  CA -> EEPROM
+08312h                                                           ; WEJ:
+08312h                                                           ; <PR_OD>  <PR_DO> , nr programu w <NR_PR>, ilosc bajtów <PR_DLUG>
+08312h 320DFE                           LD        (NR_PR),A      ; przechowanie numeru programu
+08315h                                                           ;od  <POCZ_WEE> - zapisane juz numery programow,  IY wskazuje adres w EEPROM
+08315h                                                           ; przepisuje program z CA80 do EEPROM - nr, nazwa, pocz. uruchomienia
+08315h FD23                             INC       IY
+08317h FDE5                             PUSH      IY             ; IY= <PR_EE>             ; w RAM potem program
+08319h E1                               POP       HL             ; adres pocz. wpisu do EEprom /procedura <set_adr_odcz>
+0831Ah                                                           ;  teraz wpisz nr programu
+0831Ah CD7D82                           CALL      RESET
+0831Dh CD1887                           CALL      WPISZ_ADR      ; wpisz adres pocz. zapisu do EEPROM
+08320h 3A0DFE                           LD        A,(NR_PR)      ; pocz. danych:nr, adr. start w CA80
+08323h 5F                               LD        E,A
+08324h 010100                           LD        BC,1           ; zapisz tylko jeden bajt - tu nr programu
+08327h CD6083                           CALL      ZAP_Z641       ; ma STOP   ; wpis nr, i adres startowy programu w RAM CA80 - IY aktual. adr. w EEPROM
+0832Ah                                                           ; wpis pocz. adresu - start programu w CA80
+0832Ah 010200                           LD        BC,2           ; dwa bajty
+0832Dh FD23                             INC       IY
+0832Fh FDE5                             PUSH      IY
+08331h E1                               POP       HL             ; ciag dalszy zapisu
+08332h CD1887                           CALL      WPISZ_ADR      ; wpisz adres zapisu do EEPROM
+08335h                                                           ; w BC dlugosc - tu 2. bajty
+08335h 2107FE                           LD        HL,PR_OD
+08338h CD5F83                           CALL      ZAP_Z64        ; wpis do EEPROM
+0833Bh                                                           ; teraz przepisanie programu
+0833Bh ED5B07FE                         LD        DE,(PR_OD)
+0833Fh 2A09FE                           LD        HL,(PR_DO)
+08342h ED52                             SBC       HL,DE
+08344h E5                               PUSH      HL
+08345h C1                               POP       BC             ; dlugosc do przepisania
+08346h 03                               INC       BC
+08347h FDE5                             PUSH      IY
+08349h E1                               POP       HL
+0834Ah 23                               INC       HL
+0834Bh CD1887                           CALL      WPISZ_ADR      ; wpisz adres pocz. zapisu do EEPROM
+0834Eh 2A07FE                           LD        HL,(PR_OD)     ; pocz. w RAM pocz. progr /do wpisu do EEPROM/
+08351h FD23                             INC       IY
+08353h                                                           ; w BC dlugosc nazwy
+08353h CD5F83                           CALL      ZAP_Z64        ; wpis programu do EEPROM
+08356h CD8683                           CALL      END_WPISU      ; zakonczenie -> wpis  FD E4 FE FE do EEPROM
+08359h CD538A                           CALL      WP_ADR_EE
+0835Ch C30980                           JP        CAEE
+0835Fh                                                           ;=============
+0835Fh            ZAP_Z64:                        
+0835Fh 5E                               LD        E,(HL)         ; dana do zapisu
+08360h            ZAP_Z641:                       
+08360h CD6D87                           CALL      ZAP_BAJT
+08363h CD9C87                           CALL      SPRAWDZ        ;BC = BC-1, czy BC = 0
+08366h 2004                             JR        NZ,ZAP2
+08368h CD0387                           CALL      STOP           ; teraz nastepuje zapis do EEPROM
+0836Bh C9                               RET       
+0836Ch            ZAP2:                           
+0836Ch 23                               INC       HL             ; nastepny bajt do zapisu
+0836Dh FD23                             INC       IY
+0836Fh                                                           ; sprawdzenie czy koniec strony zapisu w EEPROM
+0836Fh FD7D                             LD        A,IYL          ;dfb 0fdh, 7dh ;   ld ml. bity IY do A
+08371h E63F                             AND       3FH            ; sprawdz mlodsze bity i 4. bit /koniec str. 1F /24C64/
+08373h                                                           ; 3Fh - co 64/40h bajtow /24C256/, 7Fh /dla 24C512/, FF - dla 24C16
+08373h FE00                             CP        0H
+08375h 20E8                             JR        NZ,ZAP_Z64
+08377h                                                           ; koniec strony: 0,20/4kB/, 40/8kB-DS3231/, itd, przystosowane do EEPROM DS3231 8- kB, 32 kB, 64kB
+08377h                                                           ; koniec strony, wpisz nowy adres do EEprom
+08377h C5                               PUSH      BC
+08378h E5                               PUSH      HL
+08379h CD0387                           CALL      STOP           ; teraz nastepuje zapis  do EEPROM-koniec strony lub koniec zapisu
+0837Ch FDE5                             PUSH      IY             ; aktualny adres zapisu w EEPROM
+0837Eh E1                               POP       HL
+0837Fh CD1887                           CALL      WPISZ_ADR
+08382h E1                               POP       HL
+08383h C1                               POP       BC
+08384h 18D9                             JR        ZAP_Z64
+08386h                                                           ; na zakonczenie wpisu programu, wpisz FD E4 FE FE i adres pocz.
+08386h            END_WPISU:                                     ; wpisu nastepnego programu
+08386h FDE5                             PUSH      IY
+08388h E1                               POP       HL             ; ciag dalszy zapisu
+08389h 23                               INC       HL
+0838Ah 7D                               LD        A,L            ;
+0838Bh CE20                             ADC       A,20H          ; dodanie 32 x FF wolnych bajtow na ew. zmiany na dluzszy program
+0838Dh 3001                             JR        NC,END_WP3     ; brak przeniesienia
+0838Fh 24                               INC       H
+08390h            END_WP3:                        
+08390h 6F                               LD        L,A            ; adres zwiekszony
+08391h            END_WP4:                        
+08391h CD0387                           CALL      STOP
+08394h CD1887                           CALL      WPISZ_ADR      ; wpisz adres pocz. zapisu do EEPROM 
+08397h 01E4FD                           LD        BC,M_PR
+0839Ah 58                               LD        E,B
+0839Bh CDB083                           CALL      ZAP_B_KS
+0839Eh 59                               LD        E,C
+0839Fh CDB083                           CALL      ZAP_B_KS
+083A2h 1EFE                             LD        E,M_KPR        ;  0FE
+083A4h CDB083                           CALL      ZAP_B_KS
+083A7h 1EFE                             LD        E,M_KPR        ;  0FE
+083A9h CDB083                           CALL      ZAP_B_KS
+083ACh CD0387                           CALL      STOP           ;  zapis i stop dla EEPROM
+083AFh C9                               RET                      ; jp CAEE
+083B0h                                            
+083B0h            ZAP_B_KS:                                      ; zapisz bajt i sprawdz, czy koniec strony - przy zapisie jednego bajtu!!
+083B0h CD6D87                           CALL      ZAP_BAJT
+083B3h CD9582                           CALL      KON_STR
+083B6h C9                               RET       
+083B7h                                            
+083B7h                                                           ;@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+083B7h            Z6:                                            ; odczyt numeru i nazwy programu /z EEPROM/ i zapis do RAM /od PR_CA
+083B7h CD2185                           CALL      INI_WYSW       ; ini LCD i set danych EEPRO wpis stalych /FD-od FC99/ do CA
+083BAh                                                           ; wysw. znaleziony numer i jego nazwe, przepisz nr do RAM i wyswietl-po 4 nazwy
+083BAh                                                           ;call czyt_nr ; przepisz z EEPROM do CA nr prog. i adres z EEPROM
+083BAh 210011                           LD        HL,PR_EE       ; pocz. programow w EEprom
+083BDh FD210011                         LD        IY,PR_EE       ; pocz. programow w EEprom - tu bedzie przechowywany adres do obliczen
+083C1h            WYSW_NR2:                       
+083C1h CD5F87                           CALL      SET_ADR_ODCZ   ; ustaw EEprom na odczyt - adres od pocz. programu
+083C4h                                                           ;szu_nr:
+083C4h CDE583                           CALL      SZU_DD         ; marker /FD E4/ pocz. nr programu  IY++ /adres w EEprom/-bez zapisu do RAM!
+083C7h CD3387                           CALL      CZYT_BAJT      ; numer programu
+083CAh CDF383                           CALL      WYSW_PR_CA     ; wysw. nr programu na CA /i LCD/ i sprawdz czy koniec obszaru szukania FD E4 FE FE
+083CDh CD1F84                           CALL      WYSW_NAZWE     ; na LCD
+083D0h                                                           ;szu_nr1:
+083D0h FDE5                             PUSH      IY             ; adres w EEPROM
+083D2h E1                               POP       HL             ; do <set_adr_odcz> do nowego szukania nazwy w EEprom
+083D3h CD3485                           CALL      SPR_LINIE
+083D6h 20E9                             JR        NZ,WYSW_NR2    ; szukaj nastepnej nazwy /max 4/
+083D8h CF                               RST       8              ; CF czekaj na klawisz - jesli wcisn znak 0-F, to wybiera program i uruchomia
+083D9h F5                               PUSH      AF             ; nr programu
+083DAh CDAC86                           CALL      CZYSC_LCD
+083DDh F1                               POP       AF
+083DEh FE0F                             CP        0FH
+083E0h 30DF                             JR        NC,WYSW_NR2    ; inny niz 0-F, wyswietlaj dalej nazwy programow
+083E2h                                                           ; jesli 0 do F -pobierz nr programu i przepisz do RAM
+083E2h C3B384                           JP        KON_FF1        ;szuk. wpisanego programu
+083E5h                                            
+083E5h                                                           ;****************
+083E5h            SZU_DD:                                        ; szukaj  FD E4 -pocz/koniec programu w EEprom i wyswietl adres na CA
+083E5h                                                           ; WEJ - B = FD, C = E4
+083E5h CDEB84                           CALL      MARKER_PR
+083E8h C5                               PUSH      BC             ; ochrona B = FD C = E4
+083E9h FD7C                             LD        A,IYH          ; dla efektu, wysw. starszych/mlodszych bajtow adr. EEPROM
+083EBh DF                               RST       LBYTE          ; zmienia rej. C !!
+083ECh 26                               DEFB      26H
+083EDh FD7D                             LD        A,IYL
+083EFh DF                               RST       LBYTE
+083F0h 24                               DEFB      24H
+083F1h C1                               POP       BC
+083F2h C9                               RET       
+083F3h                                            
+083F3h            WYSW_PR_CA:                                    ; wysw. nr programu na CA80 /i LCD/ i sprawdza, czy koniec obszaru, jesli po
+083F3h C5                               PUSH      BC             ; FD E4 jest FE ; jesli FD E4 FF -pusty obszar <FF>
+083F4h D5                               PUSH      DE
+083F5h DF                               RST       LBYTE
+083F6h 20                               DEFB      20H
+083F7h CDD686                           CALL      WYSW_A         ; podczas szukania IY+2 wskazuje pocz. programu w EEprom I2C
+083FAh D1                               POP       DE
+083FBh C1                               POP       BC
+083FCh 7B                               LD        A,E            ; odtworzenie wartosci - nr programu
+083FDh FEFF                             CP        0FFH           ; marker FF po FD E4 oznacza pusty obszar
+083FFh 2018                             JR        NZ,WYSW_FE
+08401h 76                               HALT      
+08402h 3E20                             LD        A," "
+08404h D3E9                             OUT       (DANA),A
+08406h CD3387                           CALL      CZYT_BAJT
+08409h CDD686                           CALL      WYSW_A         ; mlodszy bajt dlug. "pustego obszaru"
+0840Ch CD3387                           CALL      CZYT_BAJT
+0840Fh CDD686                           CALL      WYSW_A
+08412h 218689                           LD        HL,BAJT_FF     ; " bajtow FF"
+08415h CDB986                           CALL      WYS_TEKST
+08418h C9                               RET       
+08419h            WYSW_FE:                        
+08419h FEFE                             CP        M_KPR          ; FE po FD E4 oznacza koniec programow zapisanych w EEPROM I2C
+0841Bh CA9484                           JP        Z,KON_FF
+0841Eh C9                               RET       
+0841Fh                                            
+0841Fh            WYSW_NAZWE:                                    ; na LCD; najpierw znajdz marker DD E2
+0841Fh FEFF                             CP        0FFH           ; po FD E4 bylo FF, obszar pusty, nazwy brak
+08421h 2847                             JR        Z,WYS2
+08423h 01E4FD                           LD        BC,M_PR
+08426h 68                               LD        L,B            ; FD
+08427h 01E2DD                           LD        BC,M_NAZ       ; DD E2 i nazwa
+0842Ah            WYSW1:                          
+0842Ah CD3387                           CALL      CZYT_BAJT      ; odczytuje bajt, potwierdza ACK, IY++
+0842Dh B8                               CP        B              ; B = DD?
+0842Eh F5                               PUSH      AF
+0842Fh BD                               CP        L              ; FD - koniec programu
+08430h 201F                             JR        NZ,WYSW2
+08432h CD3387                           CALL      CZYT_BAJT
+08435h B9                               CP        C              ; = E4 ? po FD jest E4 - koniec programu i nazwy nie znaleziono
+08436h 2019                             JR        NZ,WYSW2
+08438h 216889                           LD        HL,BR_NAZWY    ; "BEZ NAZWY"  === A19EW brak DD E2
+0843Bh CDB986                           CALL      WYS_TEKST
+0843Eh            WYSW11:                         
+0843Eh CD6D84                           CALL      WYS22          ; ustaw linie
+08441h CD3387                           CALL      CZYT_BAJT      ; czy FE ?
+08444h FEFE                             CP        M_KPR          ; FE po FD E4 oznacza koniec programow zapisanych w EEPROM I2C
+08446h CA9484                           JP        Z,KON_FF
+08449h                                                           ; ostatni odczytany bajt po FD E4 to nr programu
+08449h DF                               RST       LBYTE          ; DF wysw. nr na CA
+0844Ah 20                               DEFB      20H
+0844Bh CDD686                           CALL      WYSW_A         ; na LCD
+0844Eh F1                               POP       AF
+0844Fh 18CE                             JR        WYSW_NAZWE
+08451h            WYSW2:                          
+08451h F1                               POP       AF
+08452h 20D6                             JR        NZ,WYSW1       ; szukaj dalej
+08454h            SZU_AA_1:                       
+08454h CD3387                           CALL      CZYT_BAJT
+08457h B9                               CP        C              ; = E2?
+08458h 20D0                             JR        NZ,WYSW1
+0845Ah                                                           ; nazwa znaleziona, wyswietl
+0845Ah            WN1:                            
+0845Ah 0612                             LD        B,18           ; max ilosc znakow w nazwie: nr programu 2 + nazwa / pierwszy znak w nazwie spacja!- albo szuka do FF
+0845Ch            WN2:                                           ; IY wskazuje pocz. nazwy  /HL nie zmienia wartosci!!/
+0845Ch CD3387                           CALL      CZYT_BAJT      ; odczyt bajtu z EEPROM
+0845Fh FEFF                             CP        0FFH           ; koniec nazwy
+08461h 2807                             JR        Z,WYS2
+08463h CDA386                           CALL      BUSY
+08466h D3E9                             OUT       (DANA),A
+08468h 10F2                             DJNZ      WN2
+0846Ah            WYS2:                           
+0846Ah CD7D82                           CALL      RESET          ; zatrzymanie pamieci EEPROM
+0846Dh            WYS22:                          
+0846Dh 2100FE                           LD        HL,NR_L
+08470h 34                               INC       (HL)
+08471h CD4085                           CALL      SET_LINIE      ;ustaw kursor na odpowiedniej/nastepnej linii
+08474h C9                               RET       
+08475h                                            
+08475h            SZUKAM:                                        ; wyswietl na LCD "szukam konca " itd  a na CA "FIND" i mrugaj. kwadr.
+08475h 3E83                             LD        A,L1+3
+08477h D3E8                             OUT       (INSTR),A
+08479h 212388                           LD        HL,FIND        ; "SZUKAM..." na LCD
+0847Ch CDCA86                           CALL      WYS_TEKST1     ; z INC (IX) na nastepna linie
+0847Fh CDA386                           CALL      BUSY
+08482h 3EC0                             LD        A,L2
+08484h D3E8                             OUT       (INSTR),A
+08486h 213388                           LD        HL,FIND2
+08489h CDCA86                           CALL      WYS_TEKST1
+0848Ch 21F887                           LD        HL,FIND1       ; na CA
+0848Fh CDD401                           CALL      PRINT
+08492h 44                               DEFB      44H
+08493h C9                               RET       
+08494h                                            
+08494h            KON_FF:                                        ; sprawdz w EEprom czy po FD E4 jest  FE; jesli tak,to koniec
+08494h                                                           ;  obszaru z programami
+08494h CD7D82                           CALL      RESET          ; stop dla EEprom
+08497h 212B89                           LD        HL,KON_PR      ; "KONIEC PROGRAMOW"
+0849Ah CD4085                           CALL      SET_LINIE
+0849Dh CDB986                           CALL      WYS_TEKST      ; na LCD
+084A0h CDA887                           CALL      OP_100MS
+084A3h 0F                               DEFB      15             ; opoznienie ok. 1,5 sek
+084A4h CD4085                           CALL      SET_LINIE
+084A7h 211889                           LD        HL,POD_NR
+084AAh CDB986                           CALL      WYS_TEKST
+084ADh CF                               RST       8              ; CF czekaj na klawisz
+084AEh FE0F                             CP        0FH
+084B0h D2B783                           JP        NC,Z6          ; mniejszy niz klaw. F
+084B3h                                                           ; wcisn. 0-9 
+084B3h            KON_FF1:                        
+084B3h D7                               RST       10H            ; D7 czysc wysw. CA
+084B4h 20                               DEFB      20H            ; dwa pierwsze znaki
+084B5h 21C087                           LD        HL,NR_PROG     ; "nrProg" na CA80
+084B8h CDD401                           CALL      PRINT
+084BBh 62                               DEFB      62H
+084BCh CD028A                           CALL      FIND_PROG_SZUK ; szukaj nr programu w RAM CA <TABL_PR_CA> i odczyt adresu w EEPROM
+084BFh                                                           ; znaleziono zadany numer, po nim pocz. startu progr. w CA /np. 23 00 C0
+084BFh                                                           ; w IY pocz. poszukiwanego programu                   nr 23 start w CA od C000
+084BFh                                                           ; przechodzimy do obslugi EEPROM
+084BFh                                                           ; w BC dlugosc programu do odczytu z EEprom I2C
+084BFh            KON_FF2:                        
+084BFh C5                               PUSH      BC             ; ochrona dlug. programu w I2C
+084C0h CD7D82                           CALL      RESET
+084C3h C1                               POP       BC
+084C4h CD5F87                           CALL      SET_ADR_ODCZ   ; adres pocz. programu w EEPROM , /za numerem programu/  
+084C7h CD7082                           CALL      CZYT_BAJTY_PR  ; odczyt z EEPROM i zapis do RAM wg (IX)
+084CAh 2A0EFE                           LD        HL,(POCZ_W_CA) ; start programu w CA
+084CDh                                                           ; wysw. na CA pocz. i koniec programu
+084CDh E5                               PUSH      HL             ; pocz.
+084CEh E7                               RST       20H
+084CFh 44                               DEFB      44H
+084D0h 21FBFF                           LD        HL,CYF4
+084D3h CBFE                             SET       7,(HL)         ; dobicie kropki
+084D5h DDE5                             PUSH      IX             ; koniec
+084D7h E1                               POP       HL
+084D8h E7                               RST       20H
+084D9h 40                               DEFB      40H
+084DAh CDA887                           CALL      OP_100MS
+084DDh 1A                               DEFB      1AH            ; op. ok. 1 sek, aby zobaczyc pocz. uruchomienia programu w CA
+084DEh E1                               POP       HL
+084DFh E9                               JP        (HL)           ; skok do programu
+084E0h                                                           ;-------
+084E0h                                            
+084E0h            WYSW_KOM_1:                     
+084E0h DD2100FE                         LD        IX,NR_L        ; po  <wys_tekst> zwieksz (IX)
+084E4h 21C788                           LD        HL,CA_EE2      ; "ZAP-ODCZ PROG z EEPR"
+084E7h CDB986                           CALL      WYS_TEKST      ; i przeskocz na nastepna linie LCD
+084EAh C9                               RET       
+084EBh                                            
+084EBh            MARKER_PR:                                     ; szukamy markera umieszczonego w BC /FD E4/, bez wpisu do RAM !
+084EBh 01E4FD                           LD        BC,M_PR        ;  FD E4, pocz/koniec programu, po nim nr programu
+084EEh 1803                             JR        MARKER1
+084F0h            MARKER_NAZ:                     
+084F0h 01E2DD                           LD        BC,M_NAZ       ; marker "FD E2"i nazwa pliku/programu 
+084F3h            MARKER1:                                       ; WEJ - B C =  szukany marker BC=FD E4 -szuk. progr. lub DD E2-szuk nazwy
+084F3h CD3387                           CALL      CZYT_BAJT      ; odczytuje bajt, potwierdza ACK, IY++
+084F6h CD5085                           CALL      WYSW_KW
+084F9h B8                               CP        B              ; B = FD ? - szuk. programu lub DD - szuk. nazwy
+084FAh 20F7                             JR        NZ,MARKER1     ; szukaj dalej
+084FCh                                                           ; znaleziony 1. marker /FD/, szukaj drugiego - E4 - szuk. programu lub E2 - szuk. nazwy
+084FCh CD3387                           CALL      CZYT_BAJT
+084FFh B9                               CP        C              ; = E4?
+08500h F5                               PUSH      AF             ; zapamietanie
+08501h 2005                             JR        NZ,MAR1        ; inny niz E4
+08503h FEFE                             CP        M_KPR          ; 0FEh ; koniec programów : FD E4 FE FE
+08505h CA9785                           JP        Z,KON_PAM      ; ##koniec obszaru z programami
+08508h            MAR1:                           
+08508h F1                               POP       AF
+08509h 20E8                             JR        NZ,MARKER1     ; szukaj dalej
+0850Bh C9                               RET       
+0850Ch                                            
+0850Ch                                                           ;szu_FF: ; po programie jest obszar FF /32x/ do nastepnego programu,
+0850Ch                                                           ; na ewent. drobne zmiany w programie, max 29 bajtów MUSI zostac
+0850Ch                                                           ; co najmniej 3. bajty FF !!
+0850Ch                                                           ;   ld b, 0FFh
+0850Ch                                                           ; szu_FF1:
+0850Ch                                                           ;   call CZYT_BAJT; odczytuje bajt, potwierdza ACK, IY++
+0850Ch                                                           ;   call wysw_kw
+0850Ch                                                           ;   cp b ; B = FF ?
+0850Ch                                                           ;   jr nz, szu_FF1 ; szukaj dalej
+0850Ch                                                           ; znaleziony 1. FF , szukaj drugiego
+0850Ch                                                           ;   call CZYT_BAJT
+0850Ch                                                           ;   cp b ; = FF?
+0850Ch                                                           ;   jr nz, szu_FF1 ; szukaj dalej
+0850Ch                                                           ; drugi tez FF
+0850Ch                                                           ;   call czyt_bajt
+0850Ch                                                           ;   cp b
+0850Ch                                                           ;   jr nz, szu_FF1
+0850Ch                                                           ;   nop ;dec IY  ; jesli nazwa na koncu programu,, koniec nazwy to FF !!
+0850Ch                                                           ;   nop
+0850Ch                                                           ;   ret z
+0850Ch                                            
+0850Ch            SZUK_END_PR:                                   ; na potrzeby wpisu nowego programu, szukamy ilosc programów
+0850Ch 1100FF                           LD        DE,0FF00H
+0850Fh 2110FE                           LD        HL,TABL_PR_CA  ; szukamy konca wpisanych numerow /1,2,.. itd/
+08512h            SZUK1:                          
+08512h 14                               INC       D              ; tu il. wolnych obszarów z bajtami FF FF ...
+08513h            SZUK2:                                         ; w RAM <PR_CA> od FE10
+08513h 7E                               LD        A,(HL)
+08514h 23                               INC       HL
+08515h 23                               INC       HL
+08516h 23                               INC       HL
+08517h FEFE                             CP        M_KPR          ; koniec odczytanych nr programow w RAM np. 01, 02,03, FE FE FE itd
+08519h C8                               RET       Z              ; POWRÓT z podprogramu
+0851Ah B7                               OR        A              ; CY = 0, wazne przy DAA !
+0851Bh 7B                               LD        A,E
+0851Ch 3C                               INC       A
+0851Dh 27                               DAA                      ; ilosc programow dziesietnie
+0851Eh 5F                               LD        E,A            ; zapamietanie
+0851Fh 18F2                             JR        SZUK2
+08521h                                            
+08521h            INI_WYSW:                                      ; inicjacja LCD, ustaw na 1. linie, wpis stalych /FD-od FC99/ do CA
+08521h 3E00                             LD        A,0            ; 1 - to 1. linia LCD
+08523h 3200FE                           LD        (NR_L),A
+08526h DD2110FE                         LD        IX,TABL_PR_CA  ; do zapisu /w RAM-<PR_CA> / i wysw. nr i nazwy programu na LCD
+0852Ah CD6F86                           CALL      INI_LCD
+0852Dh CDAC86                           CALL      CZYSC_LCD
+08530h CD8B8A                           CALL      CZYT_NR        ; przepisanie z EEPROM do CA numerow programow i ich adr. w EEPROM
+08533h C9                               RET       
+08534h                                            
+08534h            SPR_LINIE:                                     ; jesli byla 4. linia, przejdz na 1.
+08534h 3A00FE                           LD        A,(NR_L)       ;
+08537h FE04                             CP        4              ; czy byla wyswietl. 4. linia?
+08539h C0                               RET       NZ
+0853Ah 3E00                             LD        A,0            ; ustaw wyswietlanie na 1. linie LCD 0-1-2-3
+0853Ch 3200FE                           LD        (NR_L),A
+0853Fh C9                               RET       
+08540h                                            
+08540h            SET_LINIE:                                     ; wpis do rej. A pocz. linii do wyswietlana
+08540h E5                               PUSH      HL
+08541h 3A00FE                           LD        A,(NR_L)
+08544h E603                             AND       3
+08546h 21BC87                           LD        HL,NUM_LINII
+08549h 85                               ADD       A,L
+0854Ah 6F                               LD        L,A
+0854Bh 7E                               LD        A,(HL)
+0854Ch D3E8                             OUT       (INSTR),A
+0854Eh E1                               POP       HL
+0854Fh C9                               RET       
+08550h                                            
+08550h            WYSW_KW:                                       ; wysw. kwadrat na CA80, CYF3
+08550h F5                               PUSH      AF
+08551h D9                               EXX       
+08552h 21ECFF                           LD        HL,0FFECH      ; setne sek
+08555h 7E                               LD        A,(HL)
+08556h FE35                             CP        35H            ; co 1/3 sek
+08558h 3804                             JR        C,WYS_KW
+0855Ah                                                           ; cp 70h
+0855Ah D7                               RST       CLR            ; D7
+0855Bh 13                               DEFB      13H
+0855Ch 1806                             JR        WYS_KW1
+0855Eh            WYS_KW:                         
+0855Eh 0E5C                             LD        C,5CH          ; kod kwadratu
+08560h CDAB01                           CALL      COM
+08563h 13                               DEFB      13H
+08564h            WYS_KW1:                        
+08564h D9                               EXX       
+08565h F1                               POP       AF
+08566h C9                               RET       
+08567h                                            
+08567h            KON_PR_EE:                      
+08567h                                                           ; znajdz koniec programow w EEPROM FD E4 FE FE
+08567h 210011                           LD        HL,PR_EE       ; pocz. programow w EEPROM
+0856Ah E5                               PUSH      HL
+0856Bh FDE1                             POP       IY             ; tu bedzie adres EEPROM
+0856Dh CD5F87                           CALL      SET_ADR_ODCZ
+08570h            PRZ_PR21:                       
+08570h 01E4FD                           LD        BC,M_PR        ;  FD E4
+08573h CDE583                           CALL      SZU_DD         ; czytaj bajty w EEprom, gdzie pocz/koniec programow
+08576h            PRZ_PR31:                                      ; jesli po FD E4 jest FE FE koniec wpisanych programow
+08576h CD3387                           CALL      CZYT_BAJT
+08579h B8                               CP        B              ; FF ?
+0857Ah 20F4                             JR        NZ,PRZ_PR21
+0857Ch CD3387                           CALL      CZYT_BAJT
+0857Fh B9                               CP        C
+08580h 20EE                             JR        NZ,PRZ_PR21
+08582h C9                               RET       
+08583h                                            
+08583h            NR_FREE1:                                      ; ktory numer programu jest wolny oraz ile programow znaleziono
+08583h CDF982                           CALL      NF             ; ktory nr programu wolny
+08586h 7B                               LD        A,E
+08587h            NF4:                                           ; 1. wolny nr znaleziony
+08587h F5                               PUSH      AF             ; dla LCD
+08588h 3E94                             LD        A,L3
+0858Ah D3E8                             OUT       (INSTR),A
+0858Ch 214788                           LD        HL,NR_1WOL     ; tekst na LCD "pierwszy wolny nr " <rej.A>
+0858Fh CDCA86                           CALL      WYS_TEKST1     ; bez INC (IX) = przeskok na nastepna linie
+08592h F1                               POP       AF
+08593h CDD686                           CALL      WYSW_A         ; na LCD
+08596h C9                               RET       
+08597h                                            
+08597h            KON_PAM:                                       ; podczas szukania nie znaleziono numeru programu
+08597h D7                               RST       10H
+08598h 22                               DEFB      22H
+08599h E5                               PUSH      HL             ; w L nr programu
+0859Ah CD4085                           CALL      SET_LINIE
+0859Dh 217689                           LD        HL,BR_NR       ; "nie znaleziono"
+085A0h CDB986                           CALL      WYS_TEKST
+085A3h E1                               POP       HL
+085A4h 7D                               LD        A,L
+085A5h CDD686                           CALL      WYSW_A
+085A8h 7D                               LD        A,L
+085A9h DF                               RST       LBYTE          ; DF wysw. A
+085AAh 20                               DEFB      20H
+085ABh 21C787                           LD        HL,BRAK        ; "BRAK" na CA80
+085AEh CDD401                           CALL      PRINT
+085B1h 44                               DEFB      44H
+085B2h CF                               RST       8              ; CF
+085B3h C39484                           JP        KON_FF         ; pobierz nowy nr programu
+085B6h                                            
+085B6h                                                           ;find_prog:
+085B6h                                                           ;   call param
+085B6h                                                           ;   defb 20h ; nr programu w L
+085B6h                                                           ;   ld A, L
+085B6h                                                           ;   ld (NR_PR), A
+085B6h                                                           ;   push HL
+085B6h                                                           ;znaj_pr: ; odszukaj nr programu  w EEPROM
+085B6h                                                           ;   ld HL, pr_EE; pocz. programow w EEprom
+085B6h                                                           ;   ld IY, pr_EE ; pocz. programow w EEprom - tu bedzie przechowywany adres do obliczen
+085B6h                                                           ; wysw_nr21:
+085B6h                                                           ;   call set_adr_odcz ; ustaw EEprom na odczyt - adres od pocz. programu
+085B6h                                                           ; szu_nr2:
+085B6h                                                           ;  pop HL ; w L nr programu
+085B6h                                                           ; szu_nr3:
+085B6h                                                           ;  call marker_PR ; marker /FD E4/pocz. nr programu i nazwy IY++ /adres w EEprom/-bez zapisuu do RAM!
+085B6h                                                           ;  call czyt_bajt ; nr programu
+085B6h                                                           ;   push af ; nr programu
+085B6h                                                           ;   cp M_KPR; 0FEh ; jesli po FD E4 jest FE - koniec programow
+085B6h                                                           ;   call z, kon_pam ; szukanie doszlo do konca pamieci
+085B6h                                                           ;   rst LBYTE ; DF wysw. A
+085B6h                                                           ;   defb 20h
+085B6h                                                           ;   rst 10h ; D7 czysc wysw. CA
+085B6h                                                           ;   defb 22h
+085B6h                                                           ;   pop af
+085B6h                                                           ;   cp L
+085B6h                                                           ;   jr nz, szu_nr3
+085B6h                                                           ;   call czyt_bajt
+085B6h                                                           ;   ld L, A
+085B6h                                                           ;   call czyt_bajt
+085B6h                                                           ;   ld H, A
+085B6h                                                           ;   ld (pocz_W_CA), HL
+085B6h                                                           ;   ret
+085B6h                                            
+085B6h            SET_OBSZ:                       
+085B6h D7                               RST       CLR
+085B7h 40                               DEFB      40H
+085B8h 210F88                           LD        HL,CA_OD       ; RAM od....
+085BBh CDE485                           CALL      POB_ADR        ; pobierz adres  CA "od" do HL
+085BEh 2207FE                           LD        (PR_OD),HL
+085C1h E5                               PUSH      HL
+085C2h 211488                           LD        HL,CA_DO
+085C5h CDE485                           CALL      POB_ADR        ; pobierz adres  CA "do" do HL
+085C8h E5                               PUSH      HL
+085C9h 211988                           LD        HL,EEOD
+085CCh CDE485                           CALL      POB_ADR        ; pobierz adres  EEPROM "od" do HL
+085CFh E5                               PUSH      HL
+085D0h FDE1                             POP       IY             ; do kontroli koñca strony podczas zapisu  w EEPROM
+085D2h E1                               POP       HL             ; OD
+085D3h C1                               POP       BC             ; DO
+085D4h ED42                             SBC       HL,BC          ; DLUGOSC
+085D6h 23                               INC       HL
+085D7h 23                               INC       HL             ; tyle bajtow do przepisania
+085D8h E5                               PUSH      HL
+085D9h C1                               POP       BC             ; dlugosc
+085DAh FDE5                             PUSH      IY
+085DCh E1                               POP       HL             ; pocz. zapisu w EEPROM
+085DDh                                                           ; LD E, adr_z_64; "adres" pamieci EEPROM do zapisu
+085DDh CD1887                           CALL      WPISZ_ADR      ; wpisz adres pocz. zapisu do EEPROM
+085E0h 2A07FE                           LD        HL,(PR_OD)     ; pocz. w RAM pocz. obszaru do wpisu do EEPROM
+085E3h C9                               RET       
+085E4h                                            
+085E4h            POB_ADR:                                       ; pobieranie adresu
+085E4h CDD401                           CALL      PRINT          ; wyœw "CA_OD", "CA_DO"  "EEod"
+085E7h 44                               DEFB      44H
+085E8h CDF401                           CALL      PARAM          ; pobranie do HL
+085EBh 40                               DEFB      40H
+085ECh            SPEC:                                          ; potrzebne do programow jeszcze "nieobszadzonych' - powrot do menu
+085ECh C9                               RET       
+085EDh                                            
+085EDh            Z5:                                            ; szukanie dlugosci programu, gdy ew. zamiana programu
+085EDh CDAC86                           CALL      CZYSC_LCD
+085F0h 21A589                           LD        HL,SZU_DL
+085F3h CDB986                           CALL      WYS_TEKST
+085F6h 76                               HALT      
+085F7h 3EC0                             LD        A,L2
+085F9h D3E8                             OUT       (INSTR),A
+085FBh 211889                           LD        HL,POD_NR      ; lub pr_END+7 ; "podaj nr programu" na LCD
+085FEh CDB986                           CALL      WYS_TEKST
+08601h 21C087                           LD        HL,NR_PROG
+08604h CDD401                           CALL      PRINT
+08607h 62                               DEFB      62H
+08608h CDF401                           CALL      PARAM          ; pobranie do HL
+0860Bh 20                               DEFB      20H
+0860Ch 7D                               LD        A,L            ; w L nr programu
+0860Dh CDD686                           CALL      WYSW_A
+08610h CD068A                           CALL      FIND_PROG_SZUK+4
+08613h                                                           ; HL-pocz. programu w EEPROM, BC-czysta dlug. /bez obszaru z FFFF, IX pocz. pr. w CA
+08613h                                                           ; teraz znajdz pocz. nastepnego programu - marker FD E4
+08613h C5                               PUSH      BC
+08614h E5                               PUSH      HL             ; pocz. prog. w EEPROM
+08615h 2A0BFE                           LD        HL,(PR_DLUG)
+08618h E5                               PUSH      HL
+08619h E7                               RST       20H            ; wysw. HL
+0861Ah 40                               DEFB      40H
+0861Bh 21FD87                           LD        HL,DLUG1
+0861Eh CDD401                           CALL      PRINT          ; na CA
+08621h 44                               DEFB      44H
+08622h 3E94                             LD        A,L3
+08624h D3E8                             OUT       (INSTR),A
+08626h 213C89                           LD        HL,DLUG        ; "dlugosc progr " na LCD
+08629h CDB986                           CALL      WYS_TEKST
+0862Ch E1                               POP       HL             ; dlug
+0862Dh 7C                               LD        A,H
+0862Eh CDD686                           CALL      WYSW_A
+08631h 7D                               LD        A,L
+08632h CDD686                           CALL      WYSW_A
+08635h 76                               HALT                     ; call reset
+08636h                                                           ; wysw. adresu programu <od. <do>
+08636h 3E20                             LD        A," "
+08638h D3E9                             OUT       (DANA),A
+0863Ah E1                               POP       HL             ; pocz. w EEPROM 
+0863Bh CDF789                           CALL      WYS_ADR_LCD    ; wysw. rej HL
+0863Eh 76                               HALT      
+0863Fh 3E2D                             LD        A,"-"          ; spacja
+08641h D3E9                             OUT       (DANA),A
+08643h C1                               POP       BC
+08644h ED4A                             ADC       HL,BC
+08646h                                            
+08646h                                                           ;ld H, D
+08646h                                                           ;ld L, E 
+08646h 2B                               DEC       HL
+08647h 2B                               DEC       HL
+08648h 2B                               DEC       HL
+08649h CDF789                           CALL      WYS_ADR_LCD
+0864Ch                                                           ;  (IX) wskazuje bajty pocz. programu w CA80
+0864Ch 21B889                           LD        HL,POCZ_CA     ; "pocz. PR w CA "
+0864Fh 76                               HALT      
+08650h 3ED4                             LD        A,L4
+08652h D3E8                             OUT       (INSTR),A
+08654h 76                               HALT      
+08655h CDB986                           CALL      WYS_TEKST
+08658h 2A0EFE                           LD        HL,(POCZ_W_CA)
+0865Bh 76                               HALT      
+0865Ch CDF789                           CALL      WYS_ADR_LCD    ; DE wskazuje pocz. programu
+0865Fh CDDA89                           CALL      NAZWE          ; wysw. nazwe programu w L1
+08662h CF                               RST       8              ; CF czekaj na klawisz
+08663h C30080                           JP        PR_START
+08666h                                            
+08666h            BLAD_ACK:                                      ; jesli po 255 probach nie ma ACK
+08666h 211E88                           LD        HL,NO_ACK
+08669h CDD401                           CALL      PRINT
+0866Ch 44                               DEFB      44H
+0866Dh CF                               RST       8H             ; CF czekaj na wcisniecie klawisza
+0866Eh C9                               RET                      ;   jp CAEE ; pocz. programu
+0866Fh                                            
+0866Fh                                                           ; podprogramy do obslugi LCD-direct
+0866Fh                                                           ;instr_start:  30h,38h,1h,6h,0Eh ; podstawowe instr. ustawiajace LCD
+0866Fh            INI_LCD:                        
+0866Fh 3E30                             LD        A,30H          ;
+08671h D3E8                             OUT       (INSTR),A
+08673h 76                               HALT      
+08674h 76                               HALT      
+08675h 76                               HALT      
+08676h 3E30                             LD        A,30H
+08678h D3E8                             OUT       (INSTR),A
+0867Ah CDA287                           CALL      OP_100US
+0867Dh CDA287                           CALL      OP_100US
+08680h 3E30                             LD        A,30H
+08682h D3E8                             OUT       (INSTR),A
+08684h CDA287                           CALL      OP_100US
+08687h 3E38                             LD        A,38H          ; sterowanie 8-bit
+08689h D3E8                             OUT       (INSTR),A
+0868Bh CDA386                           CALL      BUSY
+0868Eh 3E01                             LD        A,1            ; czysc LCD
+08690h D3E8                             OUT       (INSTR),A
+08692h 76                               HALT      
+08693h 76                               HALT      
+08694h CDA287                           CALL      OP_100US
+08697h 3E0E                             LD        A,0EH          ; kursor na dole i wlacz LCD
+08699h D3E8                             OUT       (INSTR),A
+0869Bh CDA287                           CALL      OP_100US
+0869Eh 3E06                             LD        A,6
+086A0h D3E8                             OUT       (INSTR),A
+086A2h                                                           ;call wpis_PLD ; polskie znaki - duze litery
+086A2h                                                           ;ld a, L1
+086A2h                                                           ;out (INSTR), A
+086A2h C9                               RET                      ; powrot z podprogramu ini_lcd
+086A3h                                            
+086A3h            BUSY:                                          ; czy LCD juz wolne i gotowe do obs³ugi
+086A3h F5                               PUSH      AF
+086A4h            BUSY1:                          
+086A4h DBEA                             IN        A,(LCD_BUSY)
+086A6h E680                             AND       80H            ; sprawdŸ BIT D7
+086A8h 20FA                             JR        NZ,BUSY1
+086AAh F1                               POP       AF
+086ABh C9                               RET       
+086ACh                                            
+086ACh            CZYSC_LCD:                                     ; czysci lcd i ustawia kursor na pozycji poczatkowej LCD
+086ACh 3E01                             LD        A,1
+086AEh D3E8                             OUT       (INSTR),A
+086B0h 76                               HALT                     ; opoznienie
+086B1h 76                               HALT      
+086B2h            U_K_HOME:                                      ; ustaw kursor na poczatek LCD
+086B2h 3E80                             LD        A,L1           ; 1. linia/
+086B4h D3E8                             OUT       (INSTR),A
+086B6h 76                               HALT                     ; opoznienie
+086B7h 76                               HALT      
+086B8h C9                               RET       
+086B9h                                            
+086B9h            WYS_TEKST:                                     ; wysw. tekst wg (HL), koniec tekstu FF, nastepnie przeskok na nastep. linie
+086B9h 7E                               LD        A,(HL)         ; pobierz litere
+086BAh FEFF                             CP        0FFH
+086BCh 2808                             JR        Z,WYS21
+086BEh CDA386                           CALL      BUSY
+086C1h D3E9                             OUT       (DANA),A
+086C3h 23                               INC       HL
+086C4h 18F3                             JR        WYS_TEKST
+086C6h            WYS21:                          
+086C6h DD3400                           INC       (IX+0)         ; nastepna linia LCD
+086C9h C9                               RET                      ; wyjœcie z podprogramu
+086CAh                                            
+086CAh            WYS_TEKST1:                                    ; wysw. tekst wg (HL), koniec tekstu FF
+086CAh 7E                               LD        A,(HL)         ; pobierz litere
+086CBh FEFF                             CP        0FFH
+086CDh C8                               RET       Z              ; wyjœcie z podprogramu
+086CEh CDA386                           CALL      BUSY
+086D1h D3E9                             OUT       (DANA),A
+086D3h 23                               INC       HL
+086D4h 18F4                             JR        WYS_TEKST1
+086D6h                                            
+086D6h            WYSW_A:                                        ; wyswietla rej. A na LCD
+086D6h F5                               PUSH      AF
+086D7h E6F0                             AND       0F0H
+086D9h 0F                               RRCA      
+086DAh 0F                               RRCA      
+086DBh 0F                               RRCA      
+086DCh 0F                               RRCA      
+086DDh FE0A                             CP        0AH
+086DFh DE69                             SBC       A,69H
+086E1h 27                               DAA       
+086E2h 76                               HALT      
+086E3h D3E9                             OUT       (DANA),A
+086E5h            AA1:                            
+086E5h F1                               POP       AF
+086E6h E60F                             AND       0FH
+086E8h FE0A                             CP        0AH
+086EAh DE69                             SBC       A,69H
+086ECh 27                               DAA       
+086EDh 76                               HALT      
+086EEh D3E9                             OUT       (DANA),A
+086F0h C9                               RET       
+086F1h                                            
+086F1h                                                           ;wysw_A1:; wyswietlenie rej. A na LCD bez zera poczatkowego
+086F1h                                                           ;   push HL
+086F1h                                                           ;   call rozdziel
+086F1h                                                           ;   ld a, L ;
+086F1h                                                           ;   cp 30h
+086F1h                                                           ;   jr z, wys1 
+086F1h                                                           ;   call busy
+086F1h                                                           ;   out (DANA), A
+086F1h                                                           ;  wys1:
+086F1h                                                           ;   ld a, H
+086F1h                                                           ;   cp 30h ; czy zero /kod "0" na LCD
+086F1h                                                           ;   jr z, wys12
+086F1h                                                           ;   call busy
+086F1h                                                           ;   out (DANA), A
+086F1h                                                           ; wys12:
+086F1h                                                           ;   pop HL
+086F1h                                                           ;   ret
+086F1h                                            
+086F1h                                                           ; PODPROGRAMY do obslugi magistrali I2C
+086F1h            START_I2C:                                     ; procedura START dla pamiêci typu 24Cxxx, I2C
+086F1h                                                           ;ld c, CTRL ; rej. C - wybór portu - E3 (z³¹cze u¿ytk) lub E7 (dodatkowe)
+086F1h 3E8B                             LD        A,WE_WE        ; konfiguracja portów  PA, PB i PC WEJ
+086F3h D3E3                             OUT       (CTRL),A
+086F5h 00                               NOP       
+086F6h 3E89                             LD        A,WY_WE        ; PA i PB WYJ, PC0-3 - WYJ, PC4-7 WEJ
+086F8h D3E3                             OUT       (CTRL),A
+086FAh 00                               NOP       
+086FBh 3E80                             LD        A,WY_WY        ;   PA, PB, PC0-3, PC4-7 jako WYJ -stan L
+086FDh D3E3                             OUT       (CTRL),A
+086FFh 76                               HALT      
+08700h 76                               HALT      
+08701h 76                               HALT      
+08702h C9                               RET       
+08703h                                            
+08703h            STOP:                                          ; procedura STOP dla pamiêci typu 24Cxxx, I2C
+08703h                                                           ;ld c, CTRL ; rej. C - wybór portu - E3 (z³¹cze u¿ytk) lub E7 (dodatkowe)
+08703h 3E89                             LD        A,WY_WE
+08705h D3E3                             OUT       (CTRL),A
+08707h 00                               NOP       
+08708h 3E8B                             LD        A,WE_WE
+0870Ah D3E3                             OUT       (CTRL),A
+0870Ch 00                               NOP       
+0870Dh 3E82                             LD        A,WE_WY        ; PC0-3 - WEJ, PB I PC4-7 WYJ
+0870Fh D3E3                             OUT       (CTRL),A
+08711h 0607                             LD        B,7            ; to jest parametr opoznienia 7 x 2 ms
+08713h CDA887                           CALL      OP_100MS
+08716h 01                               DEFB      1
+08717h C9                               RET       
+08718h            WPISZ_ADR:                                     ; przed wywolaniem w rej. E adres pamieci np. A XXX R/W
+08718h                                                           ; WEJ: E - "adres" pamieci EEprom /np. A0, A2, A4 itd
+08718h                                                           ; HL - adres komorki w EEprom do zapisu
+08718h C5                               PUSH      BC
+08719h CDF186                           CALL      START_I2C
+0871Ch 1EA0                             LD        E,ADR_Z_64
+0871Eh CD6D87                           CALL      ZAP_BAJT
+08721h            WPISZ_ADR2:                     
+08721h 5C                               LD        E,H            ; starszy bajt adresu w EEPROM
+08722h CD6D87                           CALL      ZAP_BAJT
+08725h 5D                               LD        E,L            ; mlodszy bajt adresu
+08726h CD6D87                           CALL      ZAP_BAJT
+08729h C1                               POP       BC
+0872Ah C9                               RET       
+0872Bh                                            
+0872Bh            CLK:                                           ; port C /
+0872Bh                                                           ;dec c          ; E2-port PC zlacze uzytkownika
+0872Bh 3E10                             LD        A,10H
+0872Dh D3E2                             OUT       (P_CLK),A      ; SET SCL
+0872Fh AF                               XOR       A              ; RES SCL
+08730h D3E2                             OUT       (P_CLK),A
+08732h                                                           ;INC C ; C = E3 lub E7
+08732h C9                               RET       
+08733h                                                           ;======
+08733h            CZYT_BAJT:                                     ; odczyt bajtu z EEPROM + potwierdz. ACK ; IY ++ /do obl. dlug. programow
+08733h C5                               PUSH      BC             ; WYJ - rej, E i A odczytany bajt
+08734h                                                           ;ld a, (wyb_port) ; rej. C - wybór portu - E3 (zlacze uzytk) lub E7 (dodatkowe)
+08734h                                                           ;ld c, a
+08734h            CZYT1:                          
+08734h 3E82                             LD        A,WE_WY        ; PC0 WEJ, PC4-7 WYJ SDA "1" SCL "0"
+08736h D3E3                             OUT       (CTRL),A
+08738h                                                           ;dec c
+08738h 1608                             LD        D,8            ; D - il. bitów = 8, E - jako bufor do odbieranych bitów = 0
+0873Ah            CZYT:                           
+0873Ah CD5687                           CALL      SCLH           ; ustaw SCL na H
+0873Dh 00                               NOP                      ; opóznienie
+0873Eh DBE1                             IN        A,(P_SDA)      ; odczyt portu z SDA
+08740h 0F                               RRCA                     ; przesuñ na CY
+08741h CB13                             RL        E              ; przesuñ CY na bit 0 rej. E
+08743h CD5B87                           CALL      SCLL           ; ustaw SCL na L
+08746h 15                               DEC       D
+08747h 20F1                             JR        NZ,CZYT        ; czy ostatni bit?
+08749h                                                           ; Master /CA80/ wystawia ACK /"0"/ na SDA
+08749h                                                           ;INC C
+08749h            M_ACK1:                         
+08749h 3E80                             LD        A,WY_WY        ; PA, PB, PC - WYJ, stan L
+0874Bh D3E3                             OUT       (CTRL),A       ; ustaw SDA na L /czytaj nastêpne bajty
+0874Dh CD2B87                           CALL      CLK
+08750h 00                               NOP                      ; opóznienie
+08751h C1                               POP       BC
+08752h FD23                             INC       IY             ; na potrzeby adresu w EEprom
+08754h 7B                               LD        A,E
+08755h C9                               RET       
+08756h                                            
+08756h            SCLH:                                          ; SCL  na H
+08756h 3E10                             LD        A,10H
+08758h D3E2                             OUT       (P_CLK),A
+0875Ah C9                               RET       
+0875Bh                                            
+0875Bh            SCLL:                                          ; SCL na L
+0875Bh AF                               XOR       A              ; ustaw SCL /port PC4/ na L
+0875Ch D3E2                             OUT       (P_CLK),A
+0875Eh C9                               RET       
+0875Fh                                            
+0875Fh            SET_ADR_ODCZ:                                  ; ustaw pamiec 24C512 do odczytu
+0875Fh C5                               PUSH      BC
+08760h CD1887                           CALL      WPISZ_ADR
+08763h CDF186                           CALL      START_I2C
+08766h 1EA1                             LD        E,ADR_O_64     ; adres pamieci EEPROM do odczytu
+08768h CD6D87                           CALL      ZAP_BAJT
+0876Bh C1                               POP       BC
+0876Ch C9                               RET       
+0876Dh                                            
+0876Dh            ZAP_BAJT:                                      ; wpis bajtu do EEPROM, w E dana do zapisu
+0876Dh                                                           ;PC4/SCL, PC0/SDA, jeœli  jako WEJŒCIE - to stan wysoki H, jeœli WYJ- stan niski L
+0876Dh                                                           ; WEJ: E - dana do zapisu    80h- PA, PB, PC jako WYJ - stan L
+0876Dh C5                               PUSH      BC
+0876Eh 1608                             LD        D,08H          ;iloœæ bitów
+08770h            ZAP:                            
+08770h 7B                               LD        A,E            ; odtworzenie danej do wpisu
+08771h 07                               RLCA                     ; przesuñ na lewo /na znacznik C/
+08772h 5F                               LD        E,A            ; zapamiêtanie
+08773h 3821                             JR        C,ZAPJEDYNKE   ; wyslij "1"
+08775h                                                           ;wyslanie "0"
+08775h 3E80                             LD        A,WY_WY        ; PC0-3 i PC4-7 jako WYJ/ RES SDA i RES SCL stan niski
+08777h D3E3                             OUT       (CTRL),A       ; ustawia dane "0" na SDA
+08779h            ZEGAR:                          
+08779h CD2B87                           CALL      CLK
+0877Ch 15                               DEC       D              ; czy 8. bit?
+0877Dh 20F1                             JR        NZ,ZAP
+0877Fh            ACK:                                           ; info dla SLAVE, ze koniec bajtu
+0877Fh 3E8B                             LD        A,WE_WE        ; PC0-3 PC4-7 WEJ, pocz¹tek 9. cyklu SCL "1"
+08781h D3E3                             OUT       (CTRL),A
+08783h 00                               NOP       
+08784h                                                           ; push bc
+08784h                                                           ; dec c
+08784h 06FF                             LD        B,0FFH         ; iloœæ prób sprawdz. ACK
+08786h            ACK_0:                          
+08786h 05                               DEC       B
+08787h CA6686                           JP        Z,BLAD_ACK
+0878Ah DBE1                             IN        A,(P_SDA)      ; odczyt portu PC
+0878Ch CB47                             BIT       0H,A           ; testuj bit 0 (SDA=0 potwierdzenie, SDA=1 brak
+0878Eh 20F6                             JR        NZ,ACK_0       ; czekaj a¿ ACK
+08790h                                                           ; pop bc
+08790h 3E82                             LD        A,WE_WY
+08792h D3E3                             OUT       (CTRL),A       ;PC0-3 WEJ, PC4-7 WYJ, koniec 9. cyklu SCL /SDA "1" SCL "0"
+08794h C1                               POP       BC
+08795h C9                               RET       
+08796h                                            
+08796h            ZAPJEDYNKE:                     
+08796h 3E82                             LD        A,WE_WY        ;  PC0-3 WEJ/SDA/, PC4-7 WYJ/SCL/
+08798h D3E3                             OUT       (CTRL),A       ; ustawia dane "1" na SDA
+0879Ah 18DD                             JR        ZEGAR
+0879Ch                                            
+0879Ch            SPRAWDZ:                                       ; zmniejsza BC o 1 - przy zapisie/odczycie pam. EEprom
+0879Ch 0B                               DEC       BC
+0879Dh AF                               XOR       A
+0879Eh B9                               CP        C
+0879Fh C0                               RET       NZ
+087A0h B8                               CP        B
+087A1h C9                               RET       
+087A2h                                            
+087A2h            OP_100US:                       
+087A2h 3E50                             LD        A,50H
+087A4h            OP2:                            
+087A4h 3D                               DEC       A
+087A5h 20FD                             JR        NZ,OP2
+087A7h C9                               RET       
+087A8h                                            
+087A8h            OP_100MS:                                      ; opózn. x 0,1s+ podaj param. /cd xx yy zz/
+087A8h E3                               EX        (SP),HL        ; zz - wielkosc opóznienia
+087A9h 7E                               LD        A,(HL)
+087AAh 23                               INC       HL
+087ABh E3                               EX        (SP),HL
+087ACh C5                               PUSH      BC
+087ADh E5                               PUSH      HL
+087AEh 47                               LD        B,A
+087AFh            OP1:                            
+087AFh 21183C                           LD        HL,3C18H
+087B2h            OP12:                           
+087B2h 2B                               DEC       HL
+087B3h 7D                               LD        A,L
+087B4h B4                               OR        H
+087B5h 20FB                             JR        NZ,OP12
+087B7h 10F6                             DJNZ      OP1
+087B9h E1                               POP       HL
+087BAh C1                               POP       BC
+087BBh C9                               RET       
+087BCh                                            
+087BCh            NUM_LINII:                                     ; tablica adresów pocz¹tków linii LCD
+087BCh 80C094D4                         DEFB      L1,L2,L3,L4    ; musi byc na jednej stronie
+087C0h                                                           ;************komunikaty CA80
+087C0h 545073505C NR_PROG:              DEFB      54H,50H,73H,50H,5CH,0BDH,255; "nr ProG" na CA
+087C7h                                                           ;wysw_ile: defb 73h, 50h, 5ch, 0BDh, 48h, 0, 255 ; "Prog=" na CA
+087C7h 7C5077F8FF BRAK:                 DEFB      7CH,50H,77H,0F8H,0FFH;"brak" na CA80
+087CCh 5450715079 NR_FR:                DEFB      54H,50H,71H,50H,79H,0F9H,255; "nrFree" na CA
+087D3h 545C715079 NR_NF:                DEFB      54H,5CH,71H,50H,79H,0F9H,255; "noFree" na CA
+087DAh 545073D0FF NR:                   DEFB      54H,50H,73H,0D0H,255; "nrPr."  
+087DFh 7979735008 CA_EE:                DEFB      79H,79H,73H,50H,8,4H,5BH,58H,255; na CA "EEPr_i2c"
+087E8h 7950776D79 KAS_EE:               DEFB      79H,50H,77H,6DH,79H,0D3H,0,39H,255;"ErASE? C"
+087F1h 795077ED73 KAS_PR1:              DEFB      79H,50H,77H,0EDH,73H,50H,255; Eras.PR."
+087F8h 7110545EFF FIND1:                DEFB      71H,10H,54H,5EH,255; "Find"
+087FDh 5E381CBDFF DLUG1:                DEFB      5EH,38H,1CH,0BDH,255;"dLuG."  na CA80
+08802h 79545EFF   KON:                  DEFB      79H,54H,5EH,255; tekst "End" dla ca80
+08806h 73D077005C PR_OB:                DEFB      73H,0D0H,77H,0,5CH,0FCH,8,79H,255; "PR A ob_E"
+0880Fh 39775CDEFF CA_OD:                DEFB      39H,77H,5CH,0DEH,255; napis "CAod."
+08814h 39775EDCFF CA_DO:                DEFB      39H,77H,5EH,0DCH,255; "CAdo."
+08819h 79795C5EFF EEOD:                 DEFB      79H,79H,5CH,5EH,255; "EEod" - 0FFh koniec tekstu
+0881Eh 54773978FF NO_ACK:               DEFB      54H,77H,39H,78H,0FFH; "no ACK" dla ca80
+08823h                                                           ; komunikaty LCD
+08823h 2020535A55 FIND:                 DEFM      "  SZUKAM KONCA ",255
+08833h 2050524F47 FIND2:                DEFM      " PROGRAMOW W EEPROM",255
+08847h 5049455257 NR_1WOL:              DEFM      "PIERWSZY WOLNY NR ",255
+0885Ah 204E554D45 NR_NF1:               DEFM      " NUMER ZAJETY",255
+08868h 5A4E414C45 ILE_PRO:              DEFM      "ZNALEZIONO ",255
+08874h 4B4F4E4945 PR_END:               DEFM      "KONIEC-podaj nr prog",255; na LCD
+08889h 5A41504953 ZAP_PR_OB:            DEFM      "ZAPISZ PROGR klaw. A ZAPIS OBSZARU kl. E",255
+088B2h 504F44414A ZAP_DO_EE:            DEFM      "PODAJ od . do . nr =",255
+088C7h 205A41502D CA_EE2:               DEFM      " ZAP-ODCZ z EEP I2C "; na L1 ,255
+088DBh 3220414B54 KL_4:                 DEFM      "2 AKTUALIZUJ 4 ZAPIS"; na L3 
+088EFh 30204B4153 KL_0:                 DEFM      "0 KASUJ   1 WOLNY NR"; na L2    
+08903h 3520444C55 KL_1:                 DEFM      "5 DLUGOSC 6 szukPROG",255; a L4 
+08918h                                            
+08918h 504F44414A POD_NR:               DEFM      "PODAJ NR PROGRAMU ",255
+0892Bh 4B4F4E4945 KON_PR:               DEFM      "KONIEC PROGRAMOW",255;..M" defb 5 "W"
+0893Ch 646C756720 DLUG:                 DEFM      "dlug ",255
+08942h 4B41534F57 KAS_EE2:              DEFM      "KASOWAC EEPROM? C = KASUJ PROGRAM A =",255
+08968h                                                           ;kas_pr:    defm "KASUJ PROGRAM A =", 255
+08968h 2020202042 BR_NAZWY:             DEFM      "    BEZ NAZWY",255
+08976h                                                           ;nr_FE:     defm "nr FE i FF rezerwa", 255
+08976h 4E4945205A BR_NR:                DEFM      "NIE ZNALEZIONO ",255; nie znaleziono numeru
+08986h 2042414A54 BAJT_FF:              DEFM      " BAJTOW FF",255
+08991h                                                           ;obsz_FF:   defm "obszary z FF  ", 255
+08991h 50525A4547 PRZEGL:               DEFM      "PRZEGLAD EEPROM-I2C",255
+089A5h 535A554B20 SZU_DL:               DEFM      "SZUK DLUG PROGRAMU",255
+089B8h 706F637A2E POCZ_CA:              DEFM      "pocz. PR w CA ",255
+089C7h                                                           ;# po ostatnim (mozna wpisac wczesniej) bajcie programu wpisujemy DDE2 jako marker pocz. nazwy
+089C7h DDE2                             DEFB      0DDH,0E2H      ; po tym markerze DDE2 nazwa/tytul programu
+089C9h 20535A5520                       DEFM      " SZU I2C P3 B500",255; nazwa programu, max 17 znakow ze spacja  !!!
+089DAh                                            
+089DAh            NAZWE:                                         ; wysw. nazwe programu na  LCD- linia 1 
+089DAh                                                           ; w DE  pocz. programu, szukaj od tego miejsca DD E2
+089DAh                                            
+089DAh 2A05FE                           LD        HL,(POCZ_WEE)
+089DDh CD5F87                           CALL      SET_ADR_ODCZ
+089E0h 01E2DD                           LD        BC,M_NAZ       ; ,marker nazwy DD E2
+089E3h            NAZ1:                           
+089E3h CD3387                           CALL      CZYT_BAJT
+089E6h B8                               CP        B              ; czy DD ?
+089E7h 20FA                             JR        NZ,NAZ1
+089E9h CD3387                           CALL      CZYT_BAJT
+089ECh B9                               CP        C              ; czy E2
+089EDh 20F4                             JR        NZ,NAZ1
+089EFh                                                           ; w IY pocz. nazwy
+089EFh 3E80                             LD        A,L1
+089F1h D3E8                             OUT       (INSTR),A      ; ustaw kursor na pocz. L1
+089F3h CD5A84                           CALL      WN1            ; wysw. nazwe
+089F6h C9                               RET       
+089F7h                                            
+089F7h            WYS_ADR_LCD:                    
+089F7h C5                               PUSH      BC
+089F8h 7C                               LD        A,H
+089F9h CDD686                           CALL      WYSW_A
+089FCh 7D                               LD        A,L
+089FDh CDD686                           CALL      WYSW_A
+08A00h C1                               POP       BC
+08A01h C9                               RET       
+08A02h                                            
+08A02h            FIND_PROG_SZUK:                                ; szukanie numeru programu w CA w obsz. <TABL_PR_CA> , i odczyt z EEPROM
+08A02h CDF401                           CALL      PARAM          ; pob. nr programu do HL
+08A05h 20                               DEFB      20H
+08A06h 7D                               LD        A,L
+08A07h 320DFE                           LD        (NR_PR),A      ; zapamietanie do dalszych obliczen
+08A0Ah 4D                               LD        C,L            ; do kontroli, czy numer prawidlow
+08A0Bh FE00                             CP        0              ; programy od 1 !
+08A0Dh 2814                             JR        Z,F_P
+08A0Fh 210EFE                           LD        HL,TABL_PR_CA-2; adres w CA  /bo 1. program ma nr 1 a nie 0 !
+08A12h CD9F8A                           CALL      OBL_ADR
+08A15h 2202FE                           LD        (POCZ_PR_T),HL ; zapamietanie adresu do wpisu FF FF FF w num_pr_EE w EEPROM - od 1000h
+08A18h 5E                               LD        E,(HL)
+08A19h 23                               INC       HL
+08A1Ah 56                               LD        D,(HL)
+08A1Bh EB                               EX        HL,DE
+08A1Ch E5                               PUSH      HL
+08A1Dh 11FEFE                           LD        DE,0FEFEH      ; brak numeru programu
+08A20h ED52                             SBC       HL,DE
+08A22h 69                               LD        L,C
+08A23h            F_P:                            
+08A23h D29785                           JP        NC,KON_PAM     ; brak programu
+08A26h E1                               POP       HL
+08A27h 2205FE                           LD        (POCZ_WEE),HL
+08A2Ah                                                           ;odcz_adr:
+08A2Ah FD210000                         LD        IY,0           ; pocz. progr. w EEPROM - do obl. dlugosci programu
+08A2Eh CD5F87                           CALL      SET_ADR_ODCZ   ;                        00 C0
+08A31h CD3387                           CALL      CZYT_BAJT      ; mlodszy bajt adresu (start w CA)
+08A34h                                                           ; w E i A, odczytany bajt
+08A34h 6F                               LD        L,A
+08A35h CD3387                           CALL      CZYT_BAJT      ; starszy bajt j.w.
+08A38h 67                               LD        H,A
+08A39h 220EFE                           LD        (POCZ_W_CA),HL ; pocz. uruchom. programu w CA
+08A3Ch E5                               PUSH      HL
+08A3Dh DDE1                             POP       IX             ; w IX - adres w RAM - poczatek zapisu do CA
+08A3Fh                                                           ;  ld IY, 0 ; pocz. w EEPROM , do obl. dlugosci programu
+08A3Fh CDEB84                           CALL      MARKER_PR      ; FD E4 call szu_FF ; szukamy konca programu w EEPROM FF FF
+08A42h                                                           ; koniec programu, do obl. dlug. programu /do przepisania do RAM/
+08A42h                                                           ; IY wskazuje koniec szukanego programu w EEPROM /bylo 3 x FF/
+08A42h FDE5                             PUSH      IY
+08A44h E1                               POP       HL             ; dlugosc
+08A45h 2B                               DEC       HL             ; FF FF FF
+08A46h 2B                               DEC       HL
+08A47h 2B                               DEC       HL             ; dlug. programu 
+08A48h 220BFE                           LD        (PR_DLUG),HL
+08A4Bh 4D                               LD        C,L
+08A4Ch 44                               LD        B,H            ; BC jako licznik
+08A4Dh 2A05FE                           LD        HL,(POCZ_WEE)
+08A50h 23                               INC       HL
+08A51h 23                               INC       HL
+08A52h C9                               RET                      ; odczyt bajtow z EEPROM I2C i uruchomienie programu   
+08A53h                                            
+08A53h            WP_ADR_EE:                                     ; wpis do <TAB_PR> trzech bajtow w EEPROM:NR_PR i adres pocz. pr. w EEPROM, od 1000h w EEPROM I2C
+08A53h 3A0DFE                           LD        A,(NR_PR)
+08A56h 21FD0F                           LD        HL,NUM_PR_EE-3
+08A59h CD9F8A                           CALL      OBL_ADR
+08A5Ch                                                           ; LD E, adr_z_64; "adres" pamieci EEPROM do zapisu
+08A5Ch CD1887                           CALL      WPISZ_ADR      ; wpisz adres pocz. zapisu do EEPROM
+08A5Fh 2A05FE                           LD        HL,(POCZ_WEE)
+08A62h 23                               INC       HL
+08A63h 23                               INC       HL
+08A64h 2205FE                           LD        (POCZ_WEE),HL
+08A67h 3A0DFE                           LD        A,(NR_PR)
+08A6Ah 3204FE                           LD        (PR_CA),A
+08A6Dh 2104FE                           LD        HL,PR_CA       ; zapis do EEPROM (HL)
+08A70h 010300                           LD        BC,3           ; zapis trzech bajtow w EEPROM <tabl+pr>:NR_PR i adres pocz. pr. w EEPROM
+08A73h CD5F83                           CALL      ZAP_Z64        ; zapisuje wg (HL) a jak koniec strony w EEPROM ? blad
+08A76h                                                           ; wpis do TABL_PR_CA - auktualnienie programow po wpisie do EEPROM
+08A76h            WPIS_TABL:                      
+08A76h 210DFE                           LD        HL,TABL_PR_CA-3; /bo 1. program ma nr 1 a nie 0 !
+08A79h 3A0DFE                           LD        A,(NR_PR)      ; FE0D
+08A7Ch F5                               PUSH      AF
+08A7Dh CD9F8A                           CALL      OBL_ADR
+08A80h F1                               POP       AF
+08A81h 77                               LD        (HL),A
+08A82h 23                               INC       HL
+08A83h ED5B05FE                         LD        DE,(POCZ_WEE)  ; w FE05
+08A87h 73                               LD        (HL),E
+08A88h 23                               INC       HL
+08A89h 72                               LD        (HL),D
+08A8Ah C9                               RET                      ; jp CAEE
+08A8Bh                                            
+08A8Bh            CZYT_NR:                                       ; odczyt numerow programu i ich adresow w EEPROM
+08A8Bh CDAC86                           CALL      CZYSC_LCD
+08A8Eh 210010                           LD        HL,NUM_PR_EE   ; tu w EEPROM: 01 nr programu , AA BB -adres uruchomienia w CA
+08A91h CD5F87                           CALL      SET_ADR_ODCZ   ;        02 nr programu ..itd
+08A94h DD2110FE                         LD        IX,TABL_PR_CA
+08A98h 01FF00                           LD        BC,0FFH
+08A9Bh CD7082                           CALL      CZYT_BAJTY_PR
+08A9Eh C9                               RET       
+08A9Fh                                            
+08A9Fh            OBL_ADR:                        
+08A9Fh CDA98A                           CALL      DEC2BIN
+08AA2h 5F                               LD        E,A
+08AA3h 1600                             LD        D,0
+08AA5h 19                               ADD       HL,DE
+08AA6h 19                               ADD       HL,DE
+08AA7h 19                               ADD       HL,DE          ; w HL adres do wpisu
+08AA8h C9                               RET       
+08AA9h                                            
+08AA9h            DEC2BIN:                                       ; zamiana numeru programu DEC na postac HEX
+08AA9h C5                               PUSH      BC
+08AAAh 4F                               LD        C,A
+08AABh E6F0                             AND       0F0H
+08AADh CB3F                             SRL       A
+08AAFh 47                               LD        B,A
+08AB0h CB3F                             SRL       A
+08AB2h CB3F                             SRL       A
+08AB4h 80                               ADD       A,B
+08AB5h 47                               LD        B,A
+08AB6h 79                               LD        A,C
+08AB7h E60F                             AND       0FH
+08AB9h 80                               ADD       A,B
+08ABAh C1                               POP       BC
+08ABBh C9                               RET       
+08ABCh                                            
+08ABCh                                                           ; aktualizacja programow w <TABL_PR_CA> w CA
+08ABCh            AKTUAL:                         
+08ABCh CD2185                           CALL      INI_WYSW
+08ABFh 210011                           LD        HL,PR_EE       ; pocz. programow w EEPROM
+08AC2h E5                               PUSH      HL
+08AC3h FDE1                             POP       IY             ; do kontroli strony zapisu w EEPROM
+08AC5h CD5F87                           CALL      SET_ADR_ODCZ
+08AC8h 2110FE                           LD        HL,TABL_PR_CA  ; zapis odczytanych bajtow w RAM CA80
+08ACBh            AK:                             
+08ACBh CDE583                           CALL      SZU_DD         ; marker programu FD E4, po nim nr programu
+08ACEh CD3387                           CALL      CZYT_BAJT
+08AD1h 77                               LD        (HL),A         ; nr programu wpisz do RAM w CA, do <TABL_PR_CA>
+08AD2h DF                               RST       LBYTE
+08AD3h 20                               DEFB      20H
+08AD4h FEFE                             CP        0FEH           ; koniec programow
+08AD6h 280B                             JR        Z,AB
+08AD8h FD7D                             LD        A,IYL
+08ADAh 23                               INC       HL
+08ADBh 77                               LD        (HL),A
+08ADCh FD7C                             LD        A,IYH
+08ADEh 23                               INC       HL
+08ADFh 77                               LD        (HL),A
+08AE0h 23                               INC       HL
+08AE1h 18E8                             JR        AK
+08AE3h            AB:                             
+08AE3h 210010                           LD        HL,NUM_PR_EE
+08AE6h E5                               PUSH      HL
+08AE7h FDE1                             POP       IY
+08AE9h CD1887                           CALL      WPISZ_ADR
+08AECh 01EF00                           LD        BC,0EFH        ; dlugosc zapisu, bo od FE10 do FEFF
+08AEFh 2110FE                           LD        HL,TABL_PR_CA  ; skad
+08AF2h CD5F83                           CALL      ZAP_Z64
+08AF5h CF                               RST       8              ; CF
+08AF6h C30980                           JP        CAEE
+08AF9h                                            
+08AF9h                                            
+08AF9h                                            
+08AF9h                                            
+08AF9h                                            
+08AF9h                                            
+08AF9h                                                           ;*****************************
+08AF9h                                                           ; a(BIN) => a(BCD) 
+08AF9h                                                           ; [0..63h] => [00..99]
+08AF9h                                                           ;*****************************
+08AF9h                                                           ;bin2bcd:
+08AF9h                                                           ; push bc
+08AF9h                                                           ; ld b,10
+08AF9h                                                           ; ld c,-1
+08AF9h                                                           ;div10: inc c
+08AF9h                                                           ; sub b
+08AF9h                                                           ; jr nc,div10
+08AF9h                                                           ; add a,b
+08AF9h                                                           ; ld b,a
+08AF9h                                                           ; ld a,c
+08AF9h                                                           ; add a,a
+08AF9h                                                           ; add a,a
+08AF9h                                                           ; add a,a
+08AF9h                                                           ; add a,a
+08AF9h                                                           ; or b
+08AF9h                                                           ; pop bc
+08AF9h                                                           ; ret
+08AF9h                                                           ;***
+08AF9h                                                           ; a(BIN) => a(BCD) 
+08AF9h                                                           ; [0..63h] => [00..99]
+08AF9h                                                           ;****
+08AF9h                                                           ;bin2bcd1:
+08AF9h                                                           ; push bc
+08AF9h                                                           ; ld c, a
+08AF9h                                                           ; ld b, 8
+08AF9h                                                           ; xor a
+08AF9h                                                           ;loop:
+08AF9h                                                           ; sla c
+08AF9h                                                           ; adc a, a
+08AF9h                                                           ; daa
+08AF9h                                                           ; djnz loop
+08AF9h                                                           ; pop bc
+08AF9h                                                           ; ret  
+08AF9h                                            
+08AF9h                                                           ;  odczyt poz. kursora    IN A, (LCD_BUSY)  DB EA  - L1 0-13, L2 40-53, L3 14-27, L4 54-67
+08AF9h                                                           ;  odczyt znaku z LCD     IN A, (LCD_RDR) ; DB EB
+08AF9h                                            
+08AF9h            DPR:                  EQU       ($-PR_START)-1 ; dlugosc programu - () dla Aside
+08AF9h                                                           ; dpr: EQU {$-progr_E}-1    ;                {} dla kompilatora C32
+08AF9h                                            
