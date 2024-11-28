@@ -1,1 +1,1 @@
-# pamie-program-w-CA80
+# pamiec-programow-CA80
