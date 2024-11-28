@@ -1,4 +1,5 @@
 Po napisaniu jakiegoś programu do CA80, jeśli chcemy go gdzieś zapamietać/zapisać, możemy użyć funkcji standardowej w CA80 czyli zapis na magnetofon , zlec. #4 w MONITORZE CA80. Alternatywą do tego zapisu na taśmie magnetofonewej jest zapis np. do pamięci IIC typu AT24C512. Jest to pamięc EEPROM, którą można zapisywać i odczytywać bezpośrednio za pomocą CA80, używając programu np. z mojego repozytorium "AT24C512_I2C_eeprom". Mieści się tam sporo programów w przstrzeni  64KB. Problem tylko, jeśli mamy więćej programów i chcielibyśmy mieć do nich łatwyy dostęp. Dletego opracowałem prohgram  zapisu i odczytu programów z CA80 na AT24C512.
+
 Można również wykorzystać to:
 https://microgeek.eu/viewtopic.php?f=82&t=2435#p14642
 ale tu potrzebna jest płytka PCB z pinami i wkładana do CA80 tam gdzie pamięc od 4000h-7FFFh
