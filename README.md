@@ -3,7 +3,12 @@ Po napisaniu jakiegoś programu do CA80, jeśli chcemy go gdzieś zapamietać/za
 Można również wykorzystać to:
 https://microgeek.eu/viewtopic.php?f=82&t=2435#p14642
 ale tu potrzebna jest płytka PCB z pinami i wkładana do CA80 tam gdzie pamięc od 4000h-7FFFh
+
+moja wersja tej płytki wygląda nieco inaczej- nie trzeba wkładać w podstawkę tylko do bocznego złącza 34-pin lub 40-pin, w zależności od płytki MIK290
+
 ![https://github.com/Roman-tor/fotos/blob/main/p%C5%82ytka%20FLASH.jpg] (https://github.com/Roman-tor/fotos/blob/main/p%C5%82ytka%20FLASH.jpg)
+![płytka FLASH](https://github.com/user-attachments/assets/9889acc2-78af-43b0-8375-c0d04c20b75a)
+
 
 
 
