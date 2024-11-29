@@ -18,14 +18,14 @@ Możemy podlączyć linię DATA do innego portu, np PA.0 lub PC.0 ale musimy wte
 Scemat podłaczenia iiC do CA80
 ![iiC_schemat](https://github.com/user-attachments/assets/ed0d4365-88d0-4178-8b55-535b499e32a3)
 
-
-
+Nową pamięć EEPROM iiC, musimy "zainicjować" zleceniem *0 : powoduje ono wpisanie od adr. 1000h FE FE... a od 1100h FD E4 FE FE. Od tego momemtu mamy pamięć przygotowaną do wpisywania naszych programów /opis też w pliku ASM/
 
 Pamięc AT24C512 jest podzielona jakby na trzy części:
 0-FFFh to miejsce na program obsługi, abyśmy mogli go wczytać do RAM CA80 i uruchomić.
 1000h-10FFh -  na numery programów i ich umiejscowienie w EEPROM iiC
 1100h - FFFFh - nasze programy, każdy program zaczyna się od znacznika FDE4, potem numer programu, /1. bajt/ i następne dwa bajty to początek programu w CA80, i dalej już sam program / pamiętaj aby w programie nadać mu nazwę po znaczniku DDE2h ! Nazwa kończy się FFh -1x/. Program wpisany do EEPROM kończy się bajtami FFFF..., ok. 24 /"dokładanie" automatycznie po wpisie programu do pamięci iiC/- to miejsce na ewentualne poprawki programu, abyśmy nie musieli zmieniać całego układu pamięci. Po tych FFFF... znomwu FDE4, nr programu, pocz. w CA80 itd, j.w.
 Sektor drugi /1000-10FF/ to numery programów i adresy w EEPROM, też wpisywane automatycznie podczas wpisywania jakiegoś programu z CA80 do EEPROM iiC. Pierwszy bajt to nr programu, po nim dwa bajty oznaczające początek tego programu w EEPROM, natęonie znomu nr programu, adres w EEPROM itd, po ostatnim programie FE FE FE aż do 10FFh. Jeśli wpiszemy jakiś program, to automatycznie zostanie "dopisany" do obszaru 1000-10FF, za ostatnim programem. 
-Po uruchomieniu programu, sektor ten jest przepisywany do RAM CA80, od FE10h. 
+Po uruchomieniu programu, sektor ten jest przepisywany do RAM CA80, od FE10h.
+A tak wygląda ekran startowy na LCD po uruchomieniu programu:
 
 cdn...
