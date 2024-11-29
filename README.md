@@ -26,7 +26,7 @@ Pamięc AT24C512 jest podzielona jakby na trzy części:
 1100h - FFFFh - nasze programy, każdy program zaczyna się od znacznika FDE4, potem numer programu, /1. bajt/ i następne dwa bajty to początek programu w CA80, i dalej już sam program / pamiętaj aby w programie nadać mu nazwę po znaczniku DDE2h ! Nazwa kończy się FFh -1x/. Program wpisany do EEPROM kończy się bajtami FFFF..., ok. 24 /"dokładanie" automatycznie po wpisie programu do pamięci iiC/- to miejsce na ewentualne poprawki programu, abyśmy nie musieli zmieniać całego układu pamięci. Po tych FFFF... znomwu FDE4, nr programu, pocz. w CA80 itd, j.w.
 Sektor drugi /1000-10FF/ to numery programów i adresy w EEPROM, też wpisywane automatycznie podczas wpisywania jakiegoś programu z CA80 do EEPROM iiC. Pierwszy bajt to nr programu, po nim dwa bajty oznaczające początek tego programu w EEPROM, natęonie znomu nr programu, adres w EEPROM itd, po ostatnim programie FE FE FE aż do 10FFh. Jeśli wpiszemy jakiś program, to automatycznie zostanie "dopisany" do obszaru 1000-10FF, za ostatnim programem. 
 Po uruchomieniu programu, sektor ten jest przepisywany do RAM CA80, od FE10h.
-A tak wygląda ekran startowy na LCD po uruchomieniu programu:
+A tak wygląda ekran startowy na LCD i na CA80, po uruchomieniu programu:
 ![ekran_powitalny](https://github.com/user-attachments/assets/b901c505-e743-4d7c-ba89-163293d49598)
 
 
