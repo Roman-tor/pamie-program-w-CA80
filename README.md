@@ -3,7 +3,8 @@ Po napisaniu jakiegoś programu do CA80, jeśli chcemy go gdzieś zapamietać/za
 Można również wykorzystać to:
 https://microgeek.eu/viewtopic.php?f=82&t=2435#p14642
 ale tu potrzebna jest płytka PCB z pinami i wkładana do CA80 tam gdzie pamięc od 4000h-7FFFh
-![https://github.com/Roman-tor/fotos/blob/main/p%C5%82ytka%20FLASH.jpg]
+![https://github.com/Roman-tor/fotos/blob/main/p%C5%82ytka%20FLASH.jpg] (https://github.com/Roman-tor/fotos/blob/main/p%C5%82ytka%20FLASH.jpg)
+
 
 
 Mój program jest dość długi /#AF7/ ale łatwy w obsłudze; warunkiem dobrej przejrzystości programu jest wykorzystanie wyświetlacza LCD 20x4, który też jest w moim repozytirum /schemat podłączenia opracował #ZEGAR, podłączony pod port systemowy U7 -8255. Wyświetlacz pomoże nam wyświetlać nr i nazwę szukanych programów /nazwę programu musimy wpisać podczas pisania programu, poprzedzając ją znakami DDE2h/.
