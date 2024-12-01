@@ -30,6 +30,16 @@ A tak wygląda ekran startowy na LCD i na CA80, po uruchomieniu programu:
 
 ![ekran_powitalny](https://github.com/user-attachments/assets/b901c505-e743-4d7c-ba89-163293d49598)
 
-ZLECENIE # 0 - to kasowanie: pamięci lub programu; kasowanie pamięci jest opisane wyżej, kasowanie jakiegoś numeru programu polega na znalezieniu danego programu w EEPROM iiC i wpisaniu po FD E4  bajtów FF - oznacza to "pusty "obszar czyl wypełniony bajtami FF aż do następnego początku programu; a w obszarze od 1000h w EEPROM ,  w miejsce numeru programu wpisanie trzech bajtów FF.
+ZLECENIE # 0 - to kasowanie: pamięci lub programu; kasowanie pamięci jest opisane wyżej, kasowanie jakiegoś programu polega na znalezieniu danego programu w EEPROM iiC i wpisaniu po FD E4  bajtów FF - oznacza to "pusty "obszar czyl wypełniony bajtami FF aż do następnego początku programu; a w obszarze od 1000h w EEPROM,  w miejsce numeru programu / i adresu w EEPROM/ wpisanie trzech bajtów FF. To samo/ czyli kasowanie programu/ możemy zrobić zlec. # 4 - "zapisz obszar", wpisując uprzednio w obszarze RAM CA80 odpowiednie bajty FF FF.. i przepisać ten obszar do EEPROM. Miejsce "położenia" programu odczytamy zlec. # 5 - DŁUGOŚĆ, musimy to oczywiście zrobic przed skasowaniem danego programu
+
+ZLECENIE # 1 - szukanie wolnego numeru programu; po wcisnięciu klawisza 1, program znajdzie nam pierwszy wolny numer programu, który możemy nadać naszemu nowemu programowi
+
+ZLECENIE # 2 AKTUALIZACJA - powoduje przepisanie obszaru 1000h-10FFh z EEPROM do RAM cA80 od FE10h
+
+ZLECENIE # 4  ZAPISZ - możemy zapisać program - klawisem A, z obszaru RAM [od ] [.] [ do ] [.] [NR] [=]  nr to nadany przez nas numer programu; jesli wcisniemy klawisz E, to możemy przepisać obszar z CA80 do EEPORM [od CA] [.] [do_CA] [.] od_EEP] [=]
+
+ZLECENIE # 5 DŁUGOŚĆ - musimy podać nr szukanego programu - na CA80 wyświetli sie długość programu i pocz. w EEPROM / tylko tyle bo mamy do dyspozycji 8. znaków a na LCD wyświetli się nam 
+
+
 
 cdn...
