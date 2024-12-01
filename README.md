@@ -48,6 +48,10 @@ ZLECENIE # 5 DŁUGOŚĆ - musimy podać nr szukanego programu - na CA80 wyświet
 
 ![dlug_progr](https://github.com/user-attachments/assets/8444bff1-aa5a-44a8-9696-5a6e6dc8f0ea)
 
+ZLECENIE # 6 SZUKANIE PROGRAMU - po wcisnieciu klawisza 6, są wyszukiwane programy znajdujące sie w EEPROM i ich numery jak i nazwa są wyśwuetlane na LCD, na CA80 adres pocz. denego programu; wyśietlane są po cztery programy /ze względu na lCD/, jeśli wcisniemy klawisz = , szukane są nastęone programy; jęsli wcisniemy klawisz 0-9 - tzn. jakiś nr programu, zostanie odszukany, przepisany do CA80 i uruchomiony
+
+
+
 
 
 
