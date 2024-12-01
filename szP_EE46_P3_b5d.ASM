@@ -1233,6 +1233,8 @@ Z5: ; szukanie dlugosci programu, gdy ew. zamiana programu
    ld HL, (pocz_w_CA)
    halt
    call wys_adr_LCD   ; DE wskazuje pocz. programu
+   call reset
+   ld HL, (pocz_wEE)
    call nazwe ; wysw. nazwe programu w L1
    rst 8 ; CF czekaj na klawisz
    jp pr_start
