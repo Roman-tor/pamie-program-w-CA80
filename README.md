@@ -34,6 +34,9 @@ ZLECENIE # 0 - to kasowanie: pamięci lub programu; kasowanie pamięci jest opis
 
 ZLECENIE # 1 - szukanie wolnego numeru programu; po wcisnięciu klawisza 1, program znajdzie nam pierwszy wolny numer programu, który możemy nadać naszemu nowemu programowi
 
+![wolny_progr](https://github.com/user-attachments/assets/b9bd8ca7-5a8b-494d-a1a2-50ec2ade84ed)
+
+
 ZLECENIE # 2 AKTUALIZACJA - powoduje przepisanie obszaru 1000h-10FFh z EEPROM do RAM cA80 od FE10h
 
 ZLECENIE # 4  ZAPISZ - możemy zapisać program - klawisem A, z obszaru RAM [od ] [.] [ do ] [.] [NR] [=]  nr to nadany przez nas numer programu; jesli wcisniemy klawisz E, to możemy przepisać obszar z CA80 do EEPORM [od CA] [.] [do_CA] [.] od_EEP] [=]
