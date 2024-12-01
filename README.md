@@ -38,7 +38,12 @@ ZLECENIE # 2 AKTUALIZACJA - powoduje przepisanie obszaru 1000h-10FFh z EEPROM do
 
 ZLECENIE # 4  ZAPISZ - możemy zapisać program - klawisem A, z obszaru RAM [od ] [.] [ do ] [.] [NR] [=]  nr to nadany przez nas numer programu; jesli wcisniemy klawisz E, to możemy przepisać obszar z CA80 do EEPORM [od CA] [.] [do_CA] [.] od_EEP] [=]
 
+
+
 ZLECENIE # 5 DŁUGOŚĆ - musimy podać nr szukanego programu - na CA80 wyświetli sie długość programu / tylko tyle bo mamy do dyspozycji 8. znaków a na LCD wyświetli się nam 
+
+![dlug_progr](https://github.com/user-attachments/assets/8444bff1-aa5a-44a8-9696-5a6e6dc8f0ea)
+
 
 
 
