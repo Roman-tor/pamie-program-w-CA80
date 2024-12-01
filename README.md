@@ -1,10 +1,10 @@
-Po napisaniu jakiegoś programu do CA80, jeśli chcemy go gdzieś zapamietać/zapisać, możemy użyć funkcji standardowej w CA80 czyli zapis na magnetofon , zlec. #4 w MONITORZE CA80. Alternatywą do tego zapisu na taśmie magnetofonewej jest zapis np. do pamięci IIC typu AT24C512. Jest to pamięc EEPROM, którą można zapisywać i odczytywać bezpośrednio za pomocą CA80, używając programu np. z mojego repozytorium "AT24C512_I2C_eeprom". Mieści się tam sporo programów w przestrzeni  64KB. Problem tylko, jeśli mamy więcej programów i chcielibyśmy mieć do nich łatwyy dostęp. Dlatego opracowałem program  zapisu i odczytu programów z CA80 na AT24C512 i na odwrót.
+Po napisaniu jakiegoś programu do CA80, jeśli chcemy go gdzieś zapamietać/zapisać, możemy użyć funkcji standardowej w CA80 czyli zapis na magnetofon , zlec. #4 w MONITORZE CA80. Alternatywą do tego zapisu na taśmie magnetofonewej jest zapis np. do pamięci IIC typu AT24C512. Jest to pamięc EEPROM, którą można zapisywać i odczytywać bezpośrednio za pomocą CA80, używając programu np. z mojego repozytorium "AT24C512_I2C_eeprom". Mieści się tam sporo programów w przestrzeni  64KB. Problem może być tylko, jeśli mamy więcej programów i chcielibyśmy mieć do nich łatwy dostęp. Dlatego opracowałem program  zapisu i odczytu programów z CA80 na AT24C512 i na odwrót.
 
 Można również wykorzystać to:
 https://microgeek.eu/viewtopic.php?f=82&t=2435#p14642
-ale tu potrzebna jest płytka PCB z pinami i wkładana do CA80 tam gdzie pamięc od 4000h-7FFFh, ta pamięc SST39SF040 ma aż 4Mbit !!!
+ale tu potrzebna jest płytka PCB z pinami i wkładana do CA80 tam gdzie pamięc od 4000h-7FFFh, ta pamięc SST39SF040 ma aż 4Mbit !!! Jest tam też program do obsługi tej płytki. Ja ma do mojej plytki - tej na zdjęciu, trochę inny program, w którym też jest LCD 20x4 i możemy zapis do FLASH robić w dowolnym miejscu, nie tylko od początku sektora / sektor liczy 4 kb - 0-FFF/.
 
-moja wersja tej płytki wygląda nieco inaczej- nie trzeba wkładać w podstawkę tylko do bocznego złącza 34-pin lub 40-pin, w zależności od płytki MIK 290 - można dolutować płaski kabel do pinów podstawki U10. Jeśli wlozymy tę płytkę, MUSIMY wyjąc pamięć z podstawki U10!!!
+Moja wersja tej płytki wygląda nieco inaczej- nie trzeba wkładać w podstawkę tylko do bocznego złącza 34-pin lub 40-pin, w zależności od płytki MIK 290 - można dolutować płaski kabel do pinów podstawki U10. Jeśli wlozymy tę płytkę, MUSIMY wyjąc pamięć z podstawki U10!!!
 Inna wersja MIK 290 #phill2k na 
 https://microgeek.eu/viewtopic.php?f=82&t=2227
 ma już takie gniazdo /40-pin/, tylko trzeba doprowadzić sygnał CE_ do pinu 20 na płytce /patrz MOD-4/, ja w mojej wersji tak zrobiłem
@@ -20,11 +20,11 @@ Schemat podłaczenia iiC do CA80
 
 Nową pamięć EEPROM iiC, musimy "zainicjować" zleceniem *0 : powoduje ono wpisanie od adr. 1000h FE FE... a od 1100h FD E4 FE FE. Od tego momemtu mamy pamięć przygotowaną do wpisywania naszych programów /opis też w pliku ASM/
 
-Pamięc AT24C512 pod nasze ptogramy jest podzielona jakby na trzy części:
+Pamięc AT24C512 pod nasze programy jest podzielona jakby na trzy części:
 0-FFFh to miejsce na program obsługi, abyśmy mogli go wczytać do RAM CA80 i uruchomić.
 1000h-10FFh -  na numery programów i ich umiejscowienie w EEPROM iiC
-1100h - FFFFh - nasze programy, każdy program zaczyna się od znacznika FDE4, potem numer programu, /1. bajt/ i następne dwa bajty to początek programu w CA80, i dalej już sam program / pamiętaj aby w programie (podczas kompilacji) nadać mu nazwę po znaczniku DDE2h ! Nazwa kończy się FFh -1x/. Jeśli nazwy nie będzie, zostanie wyświetlony komunikat "bez nazwy" po numerze programu. Program wpisany do EEPROM kończy się bajtami FFFF..., ok. 24 /"dokładanie" automatycznie po wpisie programu do pamięci iiC/- to miejsce na ewentualne poprawki programu, abyśmy nie musieli zmieniać całego układu pamięci. Po tych FFFF... znomwu FDE4, nr programu, pocz. w CA80 itd, j.w.
-Sektor drugi /1000-10FF/ to numery programów i adresy w EEPROM, też wpisywane automatycznie podczas wpisywania jakiegoś programu z CA80 do EEPROM iiC. Pierwszy bajt to nr programu, po nim dwa bajty oznaczające początek tego programu w EEPROM, natęonie znomu nr programu, adres w EEPROM itd, po ostatnim programie FE FE FE aż do 10FFh. Jeśli wpiszemy jakiś program, to automatycznie zostanie "dopisany" do obszaru 1000-10FF, za ostatnim programem. 
+1100h - FFFFh - nasze programy, każdy program zaczyna się od znacznika FDE4, potem numer programu, /1. bajt/ i następne dwa bajty to początek programu w CA80, i dalej już sam program / pamiętaj aby w programie (podczas kompilacji) nadać mu nazwę po znaczniku DDE2h ! Nazwa kończy się FFh -1x/. Jeśli nazwy nie będzie, zostanie wyświetlony komunikat "bez nazwy" po numerze programu. Program wpisany do EEPROM kończy się bajtami FFFF..., ok. 24 /"dokładanie" automatycznie po wpisie programu do pamięci iiC/- to miejsce na ewentualne poprawki programu, abyśmy nie musieli zmieniać całego układu pamięci. Po tych FFFF... znowu FDE4, nr programu, pocz. w CA80 itd, j.w.
+Sektor drugi /1000-10FF/ to numery programów i adresy w EEPROM, też wpisywane automatycznie podczas wpisywania jakiegoś programu z CA80 do EEPROM iiC. Pierwszy bajt to nr programu, po nim dwa bajty oznaczające początek tego programu w EEPROM, natęonie znomu nr programu, adres w EEPROM itd, po ostatnim programie FE FE FE aż do 10FFh. Jeśli wpiszemy jakiś program, to automatycznie zostanie "dopisany" do obszaru 1000-10FF, za ostatnim programem. Jest to opisane w pliku ASM i LST.
 Po uruchomieniu programu, sektor ten jest przepisywany do RAM CA80, od FE10h.
 A tak wygląda ekran startowy na LCD i na CA80, po uruchomieniu programu:
 
@@ -39,16 +39,16 @@ ZLECENIE # 1 - szukanie wolnego numeru programu; po wcisnięciu klawisza 1, prog
 
 ZLECENIE # 2 AKTUALIZACJA - powoduje przepisanie obszaru 1000h-10FFh z EEPROM do RAM cA80 od FE10h
 
-ZLECENIE # 4  ZAPISZ - możemy zapisać program - klawisem A, z obszaru RAM [od ] [.] [ do ] [.] [NR] [=]  nr to nadany przez nas numer programu; jesli wcisniemy klawisz E, to możemy przepisać obszar z CA80 do EEPORM [od CA] [.] [do_CA] [.] od_EEP] [=]
+ZLECENIE # 4  ZAPISZ - możemy zapisać program - klawiszem A, z obszaru RAM [od ] [.] [ do ] [.] [NR] [=]  (nr to nadany przez nas numer programu); jesli wcisniemy klawisz E, to możemy przepisać obszar z CA80 do EEPORM [od CA] [.] [do_CA] [.] od_EEP] [=]
 
 ![zapisz_progr](https://github.com/user-attachments/assets/91097745-be70-4a2d-b28b-cd332984e24a)
 
 
-ZLECENIE # 5 DŁUGOŚĆ - musimy podać nr szukanego programu - na CA80 wyświetli sie długość programu / tylko tyle bo mamy do dyspozycji 8. znaków a na LCD wyświetli się nam 
+ZLECENIE # 5 DŁUGOŚĆ - musimy podać nr szukanego programu - na CA80 wyświetli się długość programu / tylko tyle bo mamy do dyspozycji 8. znaków a na LCD wyświetli się nam 
 
 ![dlug_progr](https://github.com/user-attachments/assets/8444bff1-aa5a-44a8-9696-5a6e6dc8f0ea)
 
-ZLECENIE # 6 SZUKANIE PROGRAMU - po wcisnieciu klawisza 6, są wyszukiwane programy znajdujące sie w EEPROM i ich numery jak i nazwa są wyśwuetlane na LCD, na CA80 adres pocz. denego programu; wyśietlane są po cztery programy /ze względu na lCD/, jeśli wcisniemy klawisz = , szukane są nastęone programy; jęsli wcisniemy klawisz 0-9 - tzn. jakiś nr programu, zostanie odszukany, przepisany do CA80 i uruchomiony
+ZLECENIE # 6 SZUKANIE PROGRAMU - po wcisnieciu klawisza 6, są wyszukiwane programy znajdujące sie w EEPROM i ich numery jak i nazwa są wyśwuetlane na LCD, na CA80 adres pocz. denego programu; wyśietlane są po cztery programy /ze względu na lCD/, jeśli wcisniemy klawisz = , szukane są nastęone programy; jeśli wciśniemy klawisz 0-9 - tzn. jakiś nr programu, zostanie on odszukany, przepisany do CA80 i uruchomiony.
 
 ![szukanie_progr](https://github.com/user-attachments/assets/a6a46d7b-27d5-43b8-bdfe-552716b820b5)
 
