@@ -7,7 +7,7 @@ ale tu potrzebna jest płytka PCB z pinami i wkładana do CA80 tam gdzie pamięc
 Moja wersja tej płytki wygląda nieco inaczej- nie trzeba wkładać w podstawkę tylko do bocznego złącza 34-pin lub 40-pin, w zależności od płytki MIK 290 - można dolutować płaski kabel do pinów podstawki U10. Jeśli wlozymy tę płytkę, MUSIMY wyjąc pamięć z podstawki U10!!!
 Inna wersja MIK 290 #phill2k na 
 https://microgeek.eu/viewtopic.php?f=82&t=2227
-ma już takie gniazdo /40-pin/, tylko trzeba doprowadzić sygnał CE_ do pinu 20 na płytce /patrz MOD-4/, ja w mojej wersji tak zrobiłem
+ma już takie gniazdo /40-pin/, tylko trzeba doprowadzić sygnał CE_ do pinu 20 na płytce /patrz MOD-4/, ja w mojej wersji tak zrobiłem. W mojej wersji, po zmianie jumperów J2, J3 i J4 i programu, można zapisywać pamięć 28C64-256
 
 ![płytka FLASH](https://github.com/user-attachments/assets/9889acc2-78af-43b0-8375-c0d04c20b75a)
 
